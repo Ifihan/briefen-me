@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - Briefen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-form">
+        <h2>Sign Up</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required minlength="8">
+            </div>
+            <button type="submit">Sign Up</button>
+        </form>
+        <p class="auth-link">Already have an account? <a href="{{ url_for('web.login') }}">Login</a></p>
+    </div>
+</div>
+{% endblock %}

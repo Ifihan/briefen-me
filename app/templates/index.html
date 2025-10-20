@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Briefen - AI that makes your links speak{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero">
+        <span class="tagline">✨ AI-Powered Link Intelligence</span>
+        <h1>
+            Stop sharing <span class="gradient-text">cryptic links</span>.<br>
+            Make them speak.
+        </h1>
+        <p>Briefen creates smart, readable short URLs by analyzing your content with AI. Get meaningful links that your audience will trust.</p>
+    </div>
+
+    <div class="shortener-form">
+        <input
+            type="url"
+            id="url-input"
+            placeholder="Paste your long URL here..."
+            aria-label="Enter URL to shorten"
+            required
+        >
+        <button type="button" id="generate-btn">✨ Generate Smart Links</button>
+    </div>
+
+    <div id="progress-section" class="hidden">
+        <div class="progress-messages">
+            <p id="status-message">Processing...</p>
+        </div>
+    </div>
+
+    <div id="options-section" class="hidden">
+        <h3>Choose your preferred short link:</h3>
+        <div id="slug-options" class="slug-options">
+            <!-- Options will be inserted here by JavaScript -->
+        </div>
+        <button type="button" id="create-btn" class="hidden">Create Short Link</button>
+    </div>
+
+    <div id="result-section" class="hidden">
+        <div class="result-card">
+            <h3>Your Short Link is Ready!</h3>
+            <div class="short-url-display">
+                <input type="text" id="short-url-result" readonly aria-label="Generated short URL">
+                <button type="button" id="copy-btn">Copy</button>
+            </div>
+            <p class="original-url">Original: <span id="original-url"></span></p>
+            <button type="button" id="create-another">Create Another</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/shortener.js') }}"></script>
+{% endblock %}

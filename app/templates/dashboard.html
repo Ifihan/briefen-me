@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Briefen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Your Shortened URLs</h2>
+
+    {% if urls %}
+        <div class="dashboard-urls">
+            {% for url in urls %}
+                <div class="url-card">
+                    <div class="url-info">
+                        <div class="url-slug">
+                            <strong>{{ request.host_url }}{{ url.slug }}</strong>
+                        </div>
+                        <div class="url-original">
+                            Original: {{ url.original_url }}
+                        </div>
+                        <div class="url-meta">
+                            Created: {{ url.created_at.strftime('%Y-%m-%d %H:%M') }} | Clicks: {{ url.click_count }}
+                        </div>
+                    </div>
+                    <div class="url-actions">
+                        <button type="button" onclick="copyUrl('{{ request.host_url }}{{ url.slug }}')">Copy</button>
+                        <form method="POST" action="{{ url_for('web.delete_url', url_id=url.id) }}" class="delete-form">
+                            <button type="submit" class="delete-btn" onclick="return confirm('Are you sure?')">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>You haven't created any short links yet.</p>
+            <a href="{{ url_for('web.index') }}" class="btn">Create Your First Link</a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function copyUrl(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        alert('URL copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}

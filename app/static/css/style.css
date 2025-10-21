@@ -994,27 +994,196 @@ button:disabled {
     color: #fbbf24;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Responsive Design */
+
+/* Tablets and smaller */
+@media (max-width: 1024px) {
     .container {
         padding: 0 var(--space-4);
     }
 
+    .nav-links {
+        gap: var(--space-4);
+    }
+
+    .hero h1 {
+        font-size: clamp(2rem, 4vw, 3rem);
+    }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+    /* Container and spacing */
+    .container {
+        padding: 0 var(--space-4);
+    }
+
+    /* Navbar */
+    .navbar {
+        padding: var(--space-3) 0;
+    }
+
+    .logo {
+        font-size: 1.25rem;
+    }
+
+    .logo-icon {
+        font-size: 1.5rem;
+    }
+
+    .nav-links {
+        gap: var(--space-3);
+        font-size: 0.875rem;
+    }
+
+    .nav-link {
+        font-size: 0.875rem;
+    }
+
+    .btn-primary-small {
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.875rem;
+    }
+
+    /* GitHub nav link - make icon smaller */
+    .github-nav-link {
+        padding: var(--space-1);
+    }
+
+    .github-icon-nav {
+        width: 18px;
+        height: 18px;
+    }
+
+    .github-stars-badge {
+        font-size: 0.75rem;
+    }
+
+    .star-icon-nav {
+        width: 12px;
+        height: 12px;
+    }
+
+    /* Hero section */
     .hero {
         padding: var(--space-8) 0;
+        margin-bottom: var(--space-8);
     }
 
-    .auth-form {
-        margin: var(--space-8) auto;
-        padding: var(--space-8);
+    .hero h1 {
+        font-size: clamp(1.75rem, 6vw, 2.5rem);
+        margin-bottom: var(--space-4);
     }
 
+    .hero p {
+        font-size: 1rem;
+    }
+
+    .tagline {
+        font-size: 0.75rem;
+        padding: var(--space-1) var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+
+    /* Page header */
     .page-header {
         padding: var(--space-4) 0;
+        margin-bottom: var(--space-8);
     }
 
+    .page-header h1 {
+        font-size: clamp(1.5rem, 5vw, 2rem);
+    }
+
+    .page-header p {
+        font-size: 1rem;
+    }
+
+    /* Shortener form */
     .shortener-form {
         flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    #url-input {
+        padding: var(--space-4);
+        font-size: 0.9375rem;
+    }
+
+    /* Cards and sections */
+    #progress-section,
+    #options-section,
+    #result-section {
+        padding: var(--space-6);
+        margin: var(--space-8) auto;
+    }
+
+    /* Slug options */
+    .slug-option {
+        padding: var(--space-4);
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
+    }
+
+    .slug-option label {
+        font-size: 1rem;
+        word-break: break-all;
+    }
+
+    /* Result section */
+    .result-card h3 {
+        font-size: 1.5rem;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .short-url-display {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    #short-url-result {
+        font-size: 0.9375rem;
+        padding: var(--space-3);
+    }
+
+    .result-actions {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .result-actions button {
+        width: 100%;
+    }
+
+    /* Auth forms */
+    .auth-form {
+        margin: var(--space-8) auto;
+        padding: var(--space-6);
+        max-width: 100%;
+    }
+
+    .auth-form h2 {
+        font-size: 1.5rem;
+        margin-bottom: var(--space-6);
+    }
+
+    .form-group {
+        margin-bottom: var(--space-4);
+    }
+
+    .form-group input {
+        font-size: 0.9375rem;
+    }
+
+    .auth-link {
+        font-size: 0.875rem;
+    }
+
+    /* Dashboard */
+    .dashboard-urls h2 {
+        font-size: 1.5rem;
     }
 
     .url-card {
@@ -1024,15 +1193,165 @@ button:disabled {
         padding: var(--space-4);
     }
 
+    .url-slug {
+        font-size: 1rem;
+    }
+
+    .url-original {
+        font-size: 0.8125rem;
+    }
+
     .url-actions {
         width: 100%;
+        flex-wrap: wrap;
     }
 
     .url-actions button {
         flex: 1;
+        min-width: 120px;
+        font-size: 0.8125rem;
+        padding: var(--space-2) var(--space-3);
     }
 
-    .dashboard-urls h2 {
+    /* Empty state */
+    .empty-state {
+        padding: var(--space-8);
+    }
+
+    .empty-state p {
+        font-size: 1rem;
+    }
+
+    /* Footer */
+    .footer {
+        padding: var(--space-8) 0;
+        margin-top: var(--space-12);
+    }
+
+    .footer-brand {
+        font-size: 1.125rem;
+    }
+
+    .footer-tagline,
+    .footer-copyright {
+        font-size: 0.8125rem;
+    }
+
+    /* Buttons */
+    button, .btn {
+        padding: var(--space-3) var(--space-6);
+        font-size: 0.9375rem;
+    }
+
+    /* Flash messages */
+    .flash {
+        padding: var(--space-3) var(--space-4);
+        font-size: 0.875rem;
+    }
+
+    /* Confirmation card */
+    .confirmation-card {
+        padding: var(--space-6);
+    }
+
+    .confirmation-icon {
+        width: 48px;
+        height: 48px;
+    }
+
+    .confirmation-icon svg {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    /* Even tighter spacing */
+    .container {
+        padding: 0 var(--space-3);
+    }
+
+    /* Navbar - stack or hide some items if needed */
+    .nav-links {
+        gap: var(--space-2);
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .logo {
+        font-size: 1.125rem;
+    }
+
+    .btn-primary-small {
+        padding: var(--space-1) var(--space-3);
+        font-size: 0.8125rem;
+    }
+
+    /* Hero */
+    .hero {
+        padding: var(--space-6) 0;
+    }
+
+    .hero h1 {
         font-size: 1.5rem;
+        line-height: 1.2;
+    }
+
+    .hero p {
+        font-size: 0.9375rem;
+    }
+
+    /* Forms */
+    .shortener-form {
+        gap: var(--space-2);
+    }
+
+    #url-input {
+        padding: var(--space-3);
+        font-size: 0.875rem;
+    }
+
+    /* Cards */
+    #progress-section,
+    #options-section,
+    #result-section {
+        padding: var(--space-4);
+        margin: var(--space-6) auto;
+    }
+
+    /* Auth forms */
+    .auth-form {
+        padding: var(--space-4);
+        margin: var(--space-6) auto;
+    }
+
+    .auth-form h2 {
+        font-size: 1.25rem;
+    }
+
+    /* Dashboard */
+    .url-card {
+        padding: var(--space-3);
+    }
+
+    .url-actions {
+        flex-direction: column;
+    }
+
+    .url-actions button {
+        width: 100%;
+        min-width: auto;
+    }
+
+    /* Buttons */
+    button, .btn {
+        padding: var(--space-3) var(--space-4);
+        font-size: 0.875rem;
+    }
+
+    /* Footer */
+    .footer {
+        padding: var(--space-6) 0;
     }
 }

@@ -996,18 +996,32 @@ button:disabled {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .shortener-form {
-        flex-direction: column;
+    .container {
+        padding: 0 var(--space-4);
     }
 
     .hero {
         padding: var(--space-8) 0;
     }
 
+    .auth-form {
+        margin: var(--space-8) auto;
+        padding: var(--space-8);
+    }
+
+    .page-header {
+        padding: var(--space-4) 0;
+    }
+
+    .shortener-form {
+        flex-direction: column;
+    }
+
     .url-card {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-4);
+        padding: var(--space-4);
     }
 
     .url-actions {
@@ -1016,5 +1030,9 @@ button:disabled {
 
     .url-actions button {
         flex: 1;
+    }
+
+    .dashboard-urls h2 {
+        font-size: 1.5rem;
     }
 }

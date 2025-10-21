@@ -68,6 +68,28 @@ def login():
     return render_template('login.html')
 
 
+@bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Forgot password page (functionality to be implemented)."""
+    if current_user.is_authenticated:
+        return redirect(url_for('web.dashboard'))
+
+    if request.method == 'POST':
+        email = request.form.get('email')
+        # TODO: Implement email functionality
+        return render_template('forgot_password_confirmation.html', email=email)
+
+    return render_template('forgot_password.html')
+
+
+@bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Reset password page (functionality to be implemented)."""
+    # TODO: Implement token validation and password reset
+    flash('Password reset functionality coming soon!', 'info')
+    return redirect(url_for('web.login'))
+
+
 @bp.route('/logout')
 @login_required
 def logout():
@@ -75,6 +97,13 @@ def logout():
     logout_user()
     flash('Logged out successfully', 'success')
     return redirect(url_for('web.index'))
+
+
+@bp.route('/create')
+@login_required
+def create():
+    """Create new short link page for authenticated users."""
+    return render_template('create.html')
 
 
 @bp.route('/dashboard')

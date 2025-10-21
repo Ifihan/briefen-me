@@ -86,6 +86,8 @@ generateBtn.addEventListener('click', async () => {
 function handleUpdate(data) {
     if (data.status === 'progress') {
         statusMessage.textContent = data.message;
+        statusMessage.classList.remove('error');
+        progressSection.classList.remove('error-card');
     } else if (data.status === 'success') {
         statusMessage.textContent = data.message;
         displaySlugOptions(data.slugs);
@@ -93,12 +95,36 @@ function handleUpdate(data) {
         optionsSection.classList.remove('hidden');
         generateBtn.disabled = false;
     } else if (data.status === 'error') {
-        statusMessage.textContent = 'Error: ' + data.message;
+        showError(data.message);
         generateBtn.disabled = false;
-        setTimeout(() => {
-            progressSection.classList.add('hidden');
-        }, 3000);
     }
+}
+
+function showError(message) {
+    // Add error styling
+    statusMessage.classList.add('error');
+    progressSection.classList.add('error-card');
+
+    // Create better error message with icon
+    const errorHtml = `
+        <div style="text-align: center;">
+            <div class="error-icon">⚠️</div>
+            <div class="error-title">Oops! Something went wrong</div>
+            <div class="error-message">${message}</div>
+            <div class="error-actions">
+                <button type="button" onclick="retryGeneration()" class="btn-secondary">Try Again</button>
+            </div>
+        </div>
+    `;
+
+    progressSection.innerHTML = errorHtml;
+}
+
+function retryGeneration() {
+    progressSection.innerHTML = '<div class="progress-messages"><p id="status-message">Processing...</p></div>';
+    progressSection.classList.remove('error-card');
+    progressSection.classList.add('hidden');
+    generateBtn.click();
 }
 
 function displaySlugOptions(slugs) {
@@ -165,13 +191,22 @@ createBtn.addEventListener('click', async () => {
 });
 
 // Copy to clipboard
-copyBtn.addEventListener('click', () => {
-    shortUrlResult.select();
-    document.execCommand('copy');
-    copyBtn.textContent = 'Copied!';
-    setTimeout(() => {
-        copyBtn.textContent = 'Copy';
-    }, 2000);
+copyBtn.addEventListener('click', async () => {
+    try {
+        await navigator.clipboard.writeText(shortUrlResult.value);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy';
+        }, 2000);
+    } catch (err) {
+        // Fallback for older browsers
+        shortUrlResult.select();
+        document.execCommand('copy');
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy';
+        }, 2000);
+    }
 });
 
 // Create another

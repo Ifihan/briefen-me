@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Create Short Link - Briefen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Create Smart Link</h1>
+        <p>Let AI analyze your URL and generate meaningful short links</p>
+    </div>
+
+    <div class="shortener-form">
+        <input
+            type="url"
+            id="url-input"
+            placeholder="Paste your long URL here..."
+            aria-label="Enter URL to shorten"
+            required
+        >
+        <button type="button" id="generate-btn">✨ Generate Smart Links</button>
+    </div>
+
+    <div id="progress-section" class="hidden">
+        <div class="progress-messages">
+            <p id="status-message">Processing...</p>
+        </div>
+    </div>
+
+    <div id="options-section" class="hidden">
+        <h3>Choose your preferred short link:</h3>
+        <div id="slug-options" class="slug-options">
+            <!-- Options will be inserted here by JavaScript -->
+        </div>
+        <button type="button" id="create-btn" class="hidden">Create Short Link</button>
+    </div>
+
+    <div id="result-section" class="hidden">
+        <div class="result-card">
+            <h3>Your Short Link is Ready!</h3>
+            <div class="short-url-display">
+                <input type="text" id="short-url-result" readonly aria-label="Generated short URL">
+                <button type="button" id="copy-btn">Copy</button>
+            </div>
+            <p class="original-url">Original: <span id="original-url"></span></p>
+            <div class="result-actions">
+                <button type="button" id="view-dashboard">View Dashboard</button>
+                <button type="button" id="create-another" class="btn-secondary">Create Another</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/shortener.js') }}"></script>
+<script>
+// Redirect to dashboard after viewing
+document.addEventListener('DOMContentLoaded', () => {
+    const viewDashboardBtn = document.getElementById('view-dashboard');
+    if (viewDashboardBtn) {
+        viewDashboardBtn.addEventListener('click', () => {
+            window.location.href = "{{ url_for('web.dashboard') }}";
+        });
+    }
+});
+</script>
+{% endblock %}

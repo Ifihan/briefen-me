@@ -185,6 +185,39 @@ body {
     width: 100%;
 }
 
+/* GitHub Nav Link */
+.github-nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all var(--transition-base);
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+}
+
+.github-nav-link:hover {
+    color: var(--text-primary);
+    background: var(--gray-100);
+}
+
+.github-icon-nav {
+    flex-shrink: 0;
+}
+
+.github-stars-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.star-icon-nav {
+    flex-shrink: 0;
+}
+
 /* Buttons */
 .btn-primary-small {
     padding: var(--space-2) var(--space-5);
@@ -238,6 +271,28 @@ button:disabled {
 .main-content {
     min-height: calc(100vh - 200px);
     padding: var(--space-12) 0;
+}
+
+/* Page Header (for authenticated pages) */
+.page-header {
+    text-align: center;
+    margin-bottom: var(--space-12);
+    padding: var(--space-8) 0;
+}
+
+.page-header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    margin-bottom: var(--space-3);
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.page-header p {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 /* Hero Section */
@@ -346,6 +401,9 @@ button:disabled {
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--border);
     animation: slideUp 0.4s ease-out;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 @keyframes slideUp {
@@ -386,6 +444,62 @@ button:disabled {
 @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+/* Error State */
+#status-message.error {
+    color: var(--error-600);
+}
+
+#status-message.error::before {
+    background: var(--error-500);
+    animation: none;
+}
+
+.error-card {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-color: var(--error-400);
+}
+
+.error-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--error-500);
+    color: white;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    margin-bottom: var(--space-4);
+}
+
+.error-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--error-600);
+    margin-bottom: var(--space-3);
+}
+
+.error-message {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-6);
+}
+
+.error-actions {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: center;
+}
+
+.btn-secondary {
+    background: var(--gray-200) !important;
+    color: var(--text-primary) !important;
+}
+
+.btn-secondary:hover {
+    background: var(--gray-300) !important;
 }
 
 /* Slug Options */
@@ -510,6 +624,13 @@ button:disabled {
     font-weight: 500;
 }
 
+.result-actions {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: center;
+    margin-top: var(--space-6);
+}
+
 /* Flash Messages */
 .flash-messages {
     max-width: 700px;
@@ -566,6 +687,14 @@ button:disabled {
     color: var(--text-primary);
 }
 
+.auth-description {
+    text-align: center;
+    margin-bottom: var(--space-6);
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
 .form-group {
     margin-bottom: var(--space-6);
 }
@@ -614,6 +743,87 @@ button:disabled {
 
 .auth-link a:hover {
     text-decoration: underline;
+}
+
+/* Password input wrapper */
+.password-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-input-wrapper input {
+    width: 100% !important;
+    padding-right: 3rem !important; /* Make space for the toggle */
+}
+
+.password-toggle {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: auto !important;
+    width: 3rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    color: var(--gray-500) !important;
+    transition: color var(--transition-base) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.password-toggle:hover {
+    color: var(--gray-700) !important;
+    background: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.eye-icon {
+    display: block;
+}
+
+.password-toggle .eye-closed {
+    display: none;
+}
+
+.password-toggle.showing .eye-open {
+    display: none;
+}
+
+.password-toggle.showing .eye-closed {
+    display: block;
+}
+
+/* Confirmation Card */
+.confirmation-card {
+    text-align: center;
+}
+
+.confirmation-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    color: white;
+    border-radius: 50%;
+    margin: 0 auto var(--space-6);
+}
+
+.confirmation-actions {
+    margin-top: var(--space-8);
+}
+
+.confirmation-actions .btn {
+    display: inline-block;
+    text-decoration: none;
 }
 
 /* Dashboard */
@@ -737,20 +947,81 @@ button:disabled {
     font-size: 0.875rem;
 }
 
+.footer-github {
+    margin: var(--space-6) 0;
+}
+
+.github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+    background: var(--gray-900);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.github-link:hover {
+    background: var(--gray-800);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.github-icon {
+    flex-shrink: 0;
+}
+
+.github-text {
+    white-space: nowrap;
+}
+
+.github-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+}
+
+.star-icon {
+    color: #fbbf24;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
-    .shortener-form {
-        flex-direction: column;
+    .container {
+        padding: 0 var(--space-4);
     }
 
     .hero {
         padding: var(--space-8) 0;
     }
 
+    .auth-form {
+        margin: var(--space-8) auto;
+        padding: var(--space-8);
+    }
+
+    .page-header {
+        padding: var(--space-4) 0;
+    }
+
+    .shortener-form {
+        flex-direction: column;
+    }
+
     .url-card {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-4);
+        padding: var(--space-4);
     }
 
     .url-actions {
@@ -759,5 +1030,9 @@ button:disabled {
 
     .url-actions button {
         flex: 1;
+    }
+
+    .dashboard-urls h2 {
+        font-size: 1.5rem;
     }
 }

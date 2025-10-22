@@ -173,6 +173,12 @@ createBtn.addEventListener('click', async () => {
             })
         });
 
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server returned an error. Please try again or contact support.');
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -181,9 +187,10 @@ createBtn.addEventListener('click', async () => {
             optionsSection.classList.add('hidden');
             resultSection.classList.remove('hidden');
         } else {
-            alert('Error: ' + data.error);
+            alert('Error: ' + (data.error || 'Unknown error occurred'));
         }
     } catch (error) {
+        console.error('Error creating short URL:', error);
         alert('Error creating short URL: ' + error.message);
     } finally {
         createBtn.disabled = false;

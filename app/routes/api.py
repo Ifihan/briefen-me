@@ -5,25 +5,25 @@ from app.models.url import URL
 from app.services.url_validator import validate_url
 from app.services.slug_generator import generate_slug_options
 
-bp = Blueprint('api', __name__, url_prefix='/api')
+bp = Blueprint("api", __name__, url_prefix="/api")
 
 
-@bp.route('/generate-slugs', methods=['POST'])
+@bp.route("/generate-slugs", methods=["POST"])
 def generate_slugs():
     """
     Generate AI-powered slug options for a URL.
     Returns Server-Sent Events stream for real-time updates.
     """
     data = request.get_json()
-    long_url = data.get('url')
+    long_url = data.get("url")
 
     if not long_url:
-        return jsonify({'error': 'URL is required'}), 400
+        return jsonify({"error": "URL is required"}), 400
 
     # Validate URL
     is_valid, error_message = validate_url(long_url)
     if not is_valid:
-        return jsonify({'error': error_message}), 400
+        return jsonify({"error": error_message}), 400
 
     def generate():
         """Stream generation process updates."""
@@ -36,47 +36,55 @@ def generate_slugs():
 
     return Response(
         stream_with_context(generate()),
-        mimetype='text/event-stream',
-        headers={
-            'Cache-Control': 'no-cache',
-            'X-Accel-Buffering': 'no'
-        }
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
-@bp.route('/create-short-url', methods=['POST'])
+@bp.route("/create-short-url", methods=["POST"])
 def create_short_url():
     """Create a shortened URL with the selected slug."""
-    data = request.get_json()
-    long_url = data.get('url')
-    slug = data.get('slug')
+    try:
+        data = request.get_json()
 
-    if not long_url or not slug:
-        return jsonify({'error': 'URL and slug are required'}), 400
+        if not data:
+            return jsonify({"success": False, "error": "Invalid request data"}), 400
 
-    # Validate URL again
-    is_valid, error_message = validate_url(long_url)
-    if not is_valid:
-        return jsonify({'error': error_message}), 400
+        long_url = data.get("url")
+        slug = data.get("slug")
 
-    # Check if slug already exists
-    if URL.query.filter_by(slug=slug).first():
-        return jsonify({'error': 'Slug already taken'}), 400
+        if not long_url or not slug:
+            return (
+                jsonify({"success": False, "error": "URL and slug are required"}),
+                400,
+            )
 
-    # Create new URL entry
-    user_id = current_user.id if current_user.is_authenticated else None
-    new_url = URL(
-        original_url=long_url,
-        slug=slug,
-        user_id=user_id
-    )
+        # Validate URL again
+        is_valid, error_message = validate_url(long_url)
+        if not is_valid:
+            return jsonify({"success": False, "error": error_message}), 400
 
-    db.session.add(new_url)
-    db.session.commit()
+        # Check if slug already exists
+        if URL.query.filter_by(slug=slug).first():
+            return jsonify({"success": False, "error": "Slug already taken"}), 400
 
-    return jsonify({
-        'success': True,
-        'slug': slug,
-        'short_url': request.host_url + slug,
-        'original_url': long_url
-    }), 201
+        user_id = current_user.id if current_user.is_authenticated else None
+        new_url = URL(original_url=long_url, slug=slug, user_id=user_id)
+
+        db.session.add(new_url)
+        db.session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "slug": slug,
+                    "short_url": request.host_url + slug,
+                    "original_url": long_url,
+                }
+            ),
+            201,
+        )
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"An error occurred: {str(e)}"}), 500

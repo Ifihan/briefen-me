@@ -515,6 +515,7 @@ button:disabled {
     font-weight: 700;
     margin-bottom: var(--space-6);
     color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .slug-option {
@@ -550,32 +551,34 @@ button:disabled {
 
 .slug-option label {
     font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--primary-700);
+    font-weight: 500;
+    color: var(--text-primary);
     cursor: pointer;
     flex: 1;
-    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Consolas', monospace;
+    letter-spacing: -0.01em;
 }
 
 /* Result Section */
 .result-card h3 {
     margin-bottom: var(--space-6);
-    color: var(--success);
+    color: var(--text-primary);
     font-size: 1.75rem;
     font-weight: 700;
     display: flex;
     align-items: center;
     gap: var(--space-3);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .result-card h3::before {
-    content: '✓';
+    content: '✨';
     display: flex;
     align-items: center;
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: var(--success-500);
+    background: linear-gradient(135deg, var(--primary-600), var(--accent-500));
     color: white;
     border-radius: 50%;
     font-size: 1.25rem;
@@ -591,22 +594,22 @@ button:disabled {
     flex: 1;
     padding: var(--space-4) var(--space-5);
     font-size: 1.125rem;
-    border: 2px solid var(--success);
+    border: 2px solid var(--primary-300);
     border-radius: var(--radius-lg);
-    background: var(--success-400);
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-    font-weight: 600;
-    color: var(--success-600);
+    background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+    font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-weight: 500;
+    color: var(--primary-700);
+    letter-spacing: -0.01em;
 }
 
 #copy-btn {
-    background: var(--success);
+    background: linear-gradient(135deg, var(--primary-600), var(--accent-500)) !important;
     white-space: nowrap;
 }
 
 #copy-btn:hover {
-    background: var(--success-600);
+    background: linear-gradient(135deg, var(--primary-700), var(--accent-600)) !important;
 }
 
 .original-url {
@@ -629,6 +632,58 @@ button:disabled {
     gap: var(--space-3);
     justify-content: center;
     margin-top: var(--space-6);
+}
+
+/* Inline Edit Section */
+.edit-section {
+    background: var(--gray-50);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.edit-section label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.edit-input-group {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+}
+
+.edit-input-group input[type="text"] {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    transition: all var(--transition-fast);
+    background: var(--surface);
+}
+
+.edit-input-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.edit-input-group input[type="text"]:invalid {
+    border-color: var(--error-400);
+}
+
+.edit-hint {
+    display: block;
+    margin-top: var(--space-2);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
 /* Flash Messages */

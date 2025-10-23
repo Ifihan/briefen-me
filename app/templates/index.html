@@ -46,7 +46,22 @@
                 <button type="button" id="copy-btn">Copy</button>
             </div>
             <p class="original-url">Original: <span id="original-url"></span></p>
-            <button type="button" id="create-another">Create Another</button>
+
+            <!-- Inline edit section (hidden by default) -->
+            <div id="edit-section" class="edit-section hidden">
+                <label for="edit-slug-input">Edit your slug:</label>
+                <div class="edit-input-group">
+                    <input type="text" id="edit-slug-input" placeholder="your-custom-slug" pattern="[a-z0-9-]+" maxlength="50">
+                    <button type="button" id="save-slug-btn" class="btn-primary">Save</button>
+                    <button type="button" id="cancel-edit-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <small class="edit-hint">Only lowercase letters, numbers, and hyphens allowed</small>
+            </div>
+
+            <div class="result-actions">
+                <button type="button" id="edit-slug-btn" class="btn-secondary hidden">Edit Slug</button>
+                <button type="button" id="create-another">Create Another</button>
+            </div>
         </div>
     </div>
 </div>

@@ -23,6 +23,7 @@
                     </div>
                     <div class="url-actions">
                         <button type="button" onclick="copyUrl('{{ request.host_url }}{{ url.slug }}')">Copy</button>
+                        <button type="button" onclick="editSlug({{ url.id }}, '{{ url.slug }}')">Edit</button>
                         <form method="POST" action="{{ url_for('web.delete_url', url_id=url.id) }}" class="delete-form">
                             <button type="submit" class="delete-btn" onclick="return confirm('Are you sure?')">Delete</button>
                         </form>
@@ -43,6 +44,48 @@ function copyUrl(url) {
     navigator.clipboard.writeText(url).then(() => {
         alert('URL copied to clipboard!');
     });
+}
+
+async function editSlug(urlId, currentSlug) {
+    const newSlug = prompt('Enter new slug:', currentSlug);
+
+    if (!newSlug || newSlug === currentSlug) {
+        return; // User cancelled or didn't change
+    }
+
+    // Validate slug format
+    if (!/^[a-z0-9-]+$/.test(newSlug)) {
+        alert('Slug can only contain lowercase letters, numbers, and hyphens');
+        return;
+    }
+
+    if (newSlug.length > 50) {
+        alert('Slug must be 50 characters or less');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/edit-slug/${urlId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ slug: newSlug })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(`Slug updated successfully!\nOld: ${data.old_slug}\nNew: ${data.new_slug}`);
+            // Reload the page to show updated slug
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update slug'));
+        }
+    } catch (error) {
+        console.error('Error editing slug:', error);
+        alert('Error editing slug: ' + error.message);
+    }
 }
 </script>
 {% endblock %}

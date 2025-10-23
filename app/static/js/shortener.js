@@ -1,6 +1,7 @@
 // Main shortener functionality
 let selectedSlug = null;
 let currentUrl = null;
+let currentUrlId = null;
 
 const urlInput = document.getElementById('url-input');
 const generateBtn = document.getElementById('generate-btn');
@@ -14,6 +15,11 @@ const shortUrlResult = document.getElementById('short-url-result');
 const originalUrl = document.getElementById('original-url');
 const copyBtn = document.getElementById('copy-btn');
 const createAnotherBtn = document.getElementById('create-another');
+const editSlugBtn = document.getElementById('edit-slug-btn');
+const editSection = document.getElementById('edit-section');
+const editSlugInput = document.getElementById('edit-slug-input');
+const saveSlugBtn = document.getElementById('save-slug-btn');
+const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
 // Generate slug options
 generateBtn.addEventListener('click', async () => {
@@ -182,8 +188,16 @@ createBtn.addEventListener('click', async () => {
         const data = await response.json();
 
         if (data.success) {
+            currentUrlId = data.url_id;
             shortUrlResult.value = data.short_url;
             originalUrl.textContent = data.original_url;
+
+            // Show edit button
+            const editBtn = document.getElementById('edit-slug-btn');
+            if (editBtn) {
+                editBtn.classList.remove('hidden');
+            }
+
             optionsSection.classList.add('hidden');
             resultSection.classList.remove('hidden');
         } else {
@@ -221,6 +235,129 @@ createAnotherBtn.addEventListener('click', () => {
     urlInput.value = '';
     currentUrl = null;
     selectedSlug = null;
+    currentUrlId = null;
     resultSection.classList.add('hidden');
     urlInput.focus();
 });
+
+// Show inline edit section
+editSlugBtn.addEventListener('click', () => {
+    editSection.classList.remove('hidden');
+    editSlugInput.value = selectedSlug;
+    editSlugInput.focus();
+    editSlugBtn.classList.add('hidden');
+});
+
+// Cancel edit
+cancelEditBtn.addEventListener('click', () => {
+    editSection.classList.add('hidden');
+    editSlugBtn.classList.remove('hidden');
+    editSlugInput.value = '';
+});
+
+// Save edited slug
+saveSlugBtn.addEventListener('click', async () => {
+    const newSlug = editSlugInput.value.trim();
+
+    if (!newSlug || newSlug === selectedSlug) {
+        editSection.classList.add('hidden');
+        editSlugBtn.classList.remove('hidden');
+        return;
+    }
+
+    // Validate slug format
+    if (!/^[a-z0-9-]+$/.test(newSlug)) {
+        alert('Slug can only contain lowercase letters, numbers, and hyphens');
+        editSlugInput.focus();
+        return;
+    }
+
+    if (newSlug.length > 50) {
+        alert('Slug must be 50 characters or less');
+        editSlugInput.focus();
+        return;
+    }
+
+    saveSlugBtn.disabled = true;
+    saveSlugBtn.textContent = 'Saving...';
+
+    try {
+        const response = await fetch(`/api/edit-slug/${currentUrlId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ slug: newSlug })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update the displayed URL directly
+            shortUrlResult.value = data.short_url;
+            selectedSlug = data.new_slug;
+
+            // Hide edit section and show edit button again
+            editSection.classList.add('hidden');
+            editSlugBtn.classList.remove('hidden');
+            editSlugInput.value = '';
+
+            // Show brief success message
+            saveSlugBtn.textContent = 'Saved!';
+            setTimeout(() => {
+                saveSlugBtn.textContent = 'Save';
+            }, 2000);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update slug'));
+        }
+    } catch (error) {
+        console.error('Error editing slug:', error);
+        alert('Error editing slug: ' + error.message);
+    } finally {
+        saveSlugBtn.disabled = false;
+    }
+});
+
+// Edit slug functionality for dashboard (still uses prompt)
+async function editSlug(urlId, currentSlug) {
+    const newSlug = prompt('Enter new slug:', currentSlug);
+
+    if (!newSlug || newSlug === currentSlug) {
+        return;
+    }
+
+    if (!/^[a-z0-9-]+$/.test(newSlug)) {
+        alert('Slug can only contain lowercase letters, numbers, and hyphens');
+        return;
+    }
+
+    if (newSlug.length > 50) {
+        alert('Slug must be 50 characters or less');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/edit-slug/${urlId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ slug: newSlug })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(`Slug updated successfully!\nOld: ${data.old_slug}\nNew: ${data.new_slug}`);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update slug'));
+        }
+    } catch (error) {
+        console.error('Error editing slug:', error);
+        alert('Error editing slug: ' + error.message);
+    }
+}
+
+// Make editSlug available globally for dashboard
+window.editSlug = editSlug;

@@ -78,6 +78,7 @@ def create_short_url():
             jsonify(
                 {
                     "success": True,
+                    "url_id": new_url.id,
                     "slug": slug,
                     "short_url": request.host_url + slug,
                     "original_url": long_url,
@@ -88,3 +89,87 @@ def create_short_url():
 
     except Exception as e:
         return jsonify({"success": False, "error": f"An error occurred: {str(e)}"}), 500
+
+
+@bp.route("/edit-slug/<int:url_id>", methods=["PUT"])
+def edit_slug(url_id):
+    """Edit the slug of an existing shortened URL."""
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"success": False, "error": "Invalid request data"}), 400
+
+        new_slug = data.get("slug")
+
+        if not new_slug:
+            return jsonify({"success": False, "error": "New slug is required"}), 400
+
+        import re
+
+        if not re.match(r"^[a-z0-9-]+$", new_slug):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Slug can only contain lowercase letters, numbers, and hyphens",
+                    }
+                ),
+                400,
+            )
+
+        if len(new_slug) > 50:
+            return (
+                jsonify(
+                    {"success": False, "error": "Slug must be 50 characters or less"}
+                ),
+                400,
+            )
+
+        url_obj = URL.query.get_or_404(url_id)
+
+        if current_user.is_authenticated:
+            if url_obj.user_id != current_user.id:
+                return (
+                    jsonify(
+                        {"success": False, "error": "Unauthorized to edit this link"}
+                    ),
+                    403,
+                )
+        else:
+            if url_obj.user_id is not None:
+                return (
+                    jsonify(
+                        {"success": False, "error": "Unauthorized to edit this link"}
+                    ),
+                    403,
+                )
+        existing = URL.query.filter_by(slug=new_slug).first()
+        if existing and existing.id != url_id:
+            return (
+                jsonify({"success": False, "error": "This slug is already taken"}),
+                400,
+            )
+
+        old_slug = url_obj.slug
+        url_obj.slug = new_slug
+        db.session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "old_slug": old_slug,
+                    "new_slug": new_slug,
+                    "short_url": request.host_url + new_slug,
+                    "url_id": url_id,
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        return (
+            jsonify({"success": False, "error": f"An error occurred: {str(e)}"}),
+            500,
+        )

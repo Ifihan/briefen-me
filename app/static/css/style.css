@@ -6,7 +6,7 @@
 }
 
 :root {
-    /* Modern Color Palette */
+    /* Professional Color Palette - Blue & Purple (No Gradients) */
     --primary-50: #f0f9ff;
     --primary-100: #e0f2fe;
     --primary-200: #bae6fd;
@@ -144,10 +144,7 @@ body {
 }
 
 .logo-text {
-    background: linear-gradient(135deg, var(--primary-600), var(--accent-500));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary);
 }
 
 .nav-links {
@@ -221,7 +218,7 @@ body {
 /* Buttons */
 .btn-primary-small {
     padding: var(--space-2) var(--space-5);
-    background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+    background: var(--primary);
     color: white;
     text-decoration: none;
     font-weight: 600;
@@ -234,6 +231,7 @@ body {
 }
 
 .btn-primary-small:hover {
+    background: var(--primary-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
@@ -242,7 +240,7 @@ button, .btn {
     padding: var(--space-4) var(--space-8);
     font-size: 1rem;
     font-weight: 600;
-    background: linear-gradient(135deg, var(--primary-600), var(--accent-500));
+    background: var(--primary);
     color: white;
     border: none;
     border-radius: var(--radius-lg);
@@ -253,6 +251,7 @@ button, .btn {
 }
 
 button:hover:not(:disabled), .btn:hover {
+    background: var(--primary-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
@@ -303,18 +302,7 @@ button:disabled {
     position: relative;
 }
 
-.hero::before {
-    content: '';
-    position: absolute;
-    top: -100px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, var(--primary-100) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: -1;
-}
+/* Removed decorative background element */
 
 .hero h1 {
     font-size: clamp(2.5rem, 5vw, 4rem);
@@ -326,10 +314,7 @@ button:disabled {
 }
 
 .hero .gradient-text {
-    background: linear-gradient(135deg, var(--primary-600), var(--accent-500));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary);
 }
 
 .hero p {
@@ -457,7 +442,7 @@ button:disabled {
 }
 
 .error-card {
-    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    background: #fee2e2;
     border-color: var(--error-400);
 }
 
@@ -578,7 +563,7 @@ button:disabled {
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, var(--primary-600), var(--accent-500));
+    background: var(--primary);
     color: white;
     border-radius: 50%;
     font-size: 1.25rem;
@@ -596,7 +581,7 @@ button:disabled {
     font-size: 1.125rem;
     border: 2px solid var(--primary-300);
     border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+    background: var(--primary-100);
     font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Consolas', monospace;
     font-weight: 500;
     color: var(--primary-700);
@@ -604,12 +589,12 @@ button:disabled {
 }
 
 #copy-btn {
-    background: linear-gradient(135deg, var(--primary-600), var(--accent-500)) !important;
+    background: var(--primary) !important;
     white-space: nowrap;
 }
 
 #copy-btn:hover {
-    background: linear-gradient(135deg, var(--primary-700), var(--accent-600)) !important;
+    background: var(--primary-hover) !important;
 }
 
 .original-url {
@@ -712,13 +697,13 @@ button:disabled {
 }
 
 .flash-success {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    background: #d1fae5;
     color: var(--success-600);
     border: 1px solid var(--success-400);
 }
 
 .flash-error {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    background: #fee2e2;
     color: var(--error-600);
     border: 1px solid var(--error-400);
 }
@@ -866,7 +851,7 @@ button:disabled {
     justify-content: center;
     width: 64px;
     height: 64px;
-    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    background: var(--primary);
     color: white;
     border-radius: 50%;
     margin: 0 auto var(--space-6);

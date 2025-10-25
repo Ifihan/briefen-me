@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
 from app.models.url import URL
+from datetime import datetime
 
 bp = Blueprint('web', __name__)
 
@@ -127,3 +128,61 @@ def delete_url(url_id):
     db.session.commit()
     flash('URL deleted successfully', 'success')
     return redirect(url_for('web.dashboard'))
+
+
+@bp.route('/sitemap.xml')
+def sitemap():
+    """Generate dynamic XML sitemap for SEO."""
+    pages = []
+
+    # Static pages (public only)
+    static_pages = [
+        {'loc': url_for('web.index', _external=True), 'changefreq': 'daily', 'priority': '1.0'},
+    ]
+    pages.extend(static_pages)
+
+    # Generate sitemap XML
+    sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    sitemap_xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+
+    for page in pages:
+        sitemap_xml.append('  <url>')
+        sitemap_xml.append(f'    <loc>{page["loc"]}</loc>')
+        sitemap_xml.append(f'    <changefreq>{page["changefreq"]}</changefreq>')
+        sitemap_xml.append(f'    <priority>{page["priority"]}</priority>')
+        sitemap_xml.append(f'    <lastmod>{datetime.now().strftime("%Y-%m-%d")}</lastmod>')
+        sitemap_xml.append('  </url>')
+
+    sitemap_xml.append('</urlset>')
+
+    return Response('\n'.join(sitemap_xml), mimetype='application/xml')
+
+
+@bp.route('/robots.txt')
+def robots():
+    """Serve robots.txt file."""
+    robots_txt = f"""# robots.txt for Briefen.me
+# Allow all crawlers to index public pages
+
+User-agent: *
+Allow: /
+Allow: /static/
+
+# Disallow authentication and user-specific pages
+Disallow: /login
+Disallow: /signup
+Disallow: /logout
+Disallow: /dashboard
+Disallow: /create
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /delete/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: {url_for('web.sitemap', _external=True)}
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+"""
+    return Response(robots_txt, mimetype='text/plain')

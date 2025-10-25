@@ -997,6 +997,38 @@ button:disabled {
     margin-bottom: var(--space-2);
 }
 
+.footer-social {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-4);
+    margin: var(--space-6) 0;
+}
+
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: var(--gray-600);
+    background: var(--gray-50);
+    border-radius: var(--radius-full);
+    transition: all var(--transition-base);
+    text-decoration: none;
+}
+
+.social-link:hover {
+    color: var(--primary);
+    background: var(--primary-50);
+    transform: translateY(-2px);
+}
+
+.social-link svg {
+    width: 20px;
+    height: 20px;
+}
+
 .footer-copyright {
     color: var(--gray-400);
     font-size: 0.875rem;

@@ -20,3 +20,6 @@ wheels/
 # Flask
 instance/
 .webassets-cache
+
+# MacOS
+.DS_Store

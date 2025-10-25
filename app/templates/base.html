@@ -3,11 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Primary Meta Tags -->
     <title>{% block title %}Briefen - AI that makes your links speak{% endblock %}</title>
+    <meta name="title" content="{% block meta_title %}Briefen - AI that makes your links speak{% endblock %}">
+    <meta name="description" content="{% block meta_description %}Transform your URLs into memorable, AI-generated short links. Briefen uses artificial intelligence to create meaningful, descriptive slugs that make your links speak for themselves.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}URL shortener, AI URL shortener, short links, link generator, custom URLs, AI-powered links, memorable links, link management{% endblock %}">
+    <meta name="author" content="Ifihanagbara Olusheye">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{% block canonical_url %}{{ request.url }}{% endblock %}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.url }}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Briefen - AI that makes your links speak{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Transform your URLs into memorable, AI-generated short links. Briefen uses artificial intelligence to create meaningful, descriptive slugs that make your links speak for themselves.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='images/og-image.svg', _external=True) }}{% endblock %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Briefen">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock %}">
+    <meta name="twitter:url" content="{% block twitter_url %}{{ request.url }}{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}Briefen - AI that makes your links speak{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Transform your URLs into memorable, AI-generated short links. Briefen uses artificial intelligence to create meaningful, descriptive slugs that make your links speak for themselves.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ url_for('static', filename='images/og-image.svg', _external=True) }}{% endblock %}">
+    <meta name="twitter:creator" content="@Ifihan_">
+    <meta name="twitter:site" content="@Ifihan_">
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="alternate icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.svg') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,6 +48,41 @@
     <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_css %}{% endblock %}
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Briefen",
+      "alternateName": "Briefen.me",
+      "url": "{{ request.url_root }}",
+      "description": "AI-powered URL shortener that transforms links into memorable, descriptive slugs",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "creator": {
+        "@type": "Person",
+        "name": "Ifihan Olusheye",
+        "url": "https://ifihan.com",
+        "sameAs": [
+          "https://twitter.com/Ifihan_",
+          "https://x.com/Ifihan_",
+          "https://www.linkedin.com/in/ifihan-olusheye",
+          "https://github.com/Ifihan"
+        ]
+      },
+      "provider": {
+        "@type": "Organization",
+        "name": "Briefen",
+        "url": "{{ request.url_root }}"
+      }
+    }
+    </script>
 </head>
 <body>
     <nav class="navbar">
@@ -73,6 +139,32 @@
                     <span class="logo-text">Briefen</span>
                 </div>
                 <p class="footer-tagline">AI that makes your links speak</p>
+
+                <div class="footer-social">
+                    <a href="https://x.com/Ifihan_" target="_blank" rel="noopener noreferrer" aria-label="Follow on X/Twitter" class="social-link">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </a>
+                    <a href="https://www.linkedin.com/in/ifihan-olusheye" target="_blank" rel="noopener noreferrer" aria-label="Connect on LinkedIn" class="social-link">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"/>
+                        </svg>
+                    </a>
+                    <a href="https://github.com/Ifihan" target="_blank" rel="noopener noreferrer" aria-label="View GitHub profile" class="social-link">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                        </svg>
+                    </a>
+                    <a href="https://ifihan.com" target="_blank" rel="noopener noreferrer" aria-label="Visit personal website" class="social-link">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="2" y1="12" x2="22" y2="12"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                    </a>
+                </div>
+
                 <p class="footer-copyright">&copy; <span id="current-year"></span> Briefen. All rights reserved.</p>
             </div>
         </div>

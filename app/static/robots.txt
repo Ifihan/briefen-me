@@ -1,0 +1,23 @@
+# robots.txt for Briefen.me
+# Allow all crawlers to index public pages
+
+User-agent: *
+Allow: /
+Allow: /static/
+
+# Disallow authentication and user-specific pages
+Disallow: /login
+Disallow: /signup
+Disallow: /logout
+Disallow: /dashboard
+Disallow: /create
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /delete/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: {{ request.url_root }}sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

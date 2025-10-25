@@ -9,10 +9,27 @@
     {% if urls %}
         <div class="dashboard-urls">
             {% for url in urls %}
-                <div class="url-card">
+                <div class="url-card" id="card-{{ url.id }}">
                     <div class="url-info">
-                        <div class="url-slug">
-                            <strong>{{ request.host_url }}{{ url.slug }}</strong>
+                        <div class="url-slug" id="slug-display-{{ url.id }}">
+                            <strong>{{ request.host_url }}<span id="slug-text-{{ url.id }}">{{ url.slug }}</span></strong>
+                        </div>
+                        <div class="edit-section hidden" id="edit-section-{{ url.id }}">
+                            <label for="edit-input-{{ url.id }}">Edit Slug</label>
+                            <div class="edit-input-group">
+                                <span class="url-prefix">{{ request.host_url }}</span>
+                                <input
+                                    type="text"
+                                    id="edit-input-{{ url.id }}"
+                                    value="{{ url.slug }}"
+                                    pattern="[a-z0-9-]+"
+                                    maxlength="50"
+                                    placeholder="your-custom-slug"
+                                />
+                                <button type="button" class="btn-secondary" onclick="saveSlug({{ url.id }})">Save</button>
+                                <button type="button" class="btn-secondary" onclick="cancelEdit({{ url.id }})">Cancel</button>
+                            </div>
+                            <span class="edit-hint">Only lowercase letters, numbers, and hyphens allowed</span>
                         </div>
                         <div class="url-original">
                             Original: {{ url.original_url }}
@@ -23,9 +40,18 @@
                     </div>
                     <div class="url-actions">
                         <button type="button" onclick="copyUrl('{{ request.host_url }}{{ url.slug }}')">Copy</button>
-                        <button type="button" onclick="editSlug({{ url.id }}, '{{ url.slug }}')">Edit</button>
+                        <button type="button" class="qr-btn" onclick="downloadQRCode({{ url.id }}, '{{ url.slug }}')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"/>
+                                <rect x="14" y="3" width="7" height="7"/>
+                                <rect x="14" y="14" width="7" height="7"/>
+                                <rect x="3" y="14" width="7" height="7"/>
+                            </svg>
+                            QR Code
+                        </button>
+                        <button type="button" id="edit-btn-{{ url.id }}" onclick="startEdit({{ url.id }}, '{{ url.slug }}')">Edit</button>
                         <form method="POST" action="{{ url_for('web.delete_url', url_id=url.id) }}" class="delete-form">
-                            <button type="submit" class="delete-btn" onclick="return confirm('Are you sure?')">Delete</button>
+                            <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this link?')">Delete</button>
                         </form>
                     </div>
                 </div>
@@ -46,23 +72,71 @@ function copyUrl(url) {
     });
 }
 
-async function editSlug(urlId, currentSlug) {
-    const newSlug = prompt('Enter new slug:', currentSlug);
+async function downloadQRCode(urlId, slug) {
+    try {
+        // Create a temporary link element to trigger download
+        const link = document.createElement('a');
+        link.href = `/api/qrcode/${urlId}`;
+        link.download = `qrcode-${slug}.png`;
+
+        // Trigger the download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error('Error downloading QR code:', error);
+        alert('Error downloading QR code: ' + error.message);
+    }
+}
+
+function startEdit(urlId, currentSlug) {
+    // Hide the slug display
+    document.getElementById(`slug-display-${urlId}`).classList.add('hidden');
+    // Show the edit section
+    document.getElementById(`edit-section-${urlId}`).classList.remove('hidden');
+    // Focus on the input
+    document.getElementById(`edit-input-${urlId}`).focus();
+    document.getElementById(`edit-input-${urlId}`).select();
+}
+
+function cancelEdit(urlId) {
+    // Show the slug display
+    document.getElementById(`slug-display-${urlId}`).classList.remove('hidden');
+    // Hide the edit section
+    document.getElementById(`edit-section-${urlId}`).classList.add('hidden');
+    // Reset the input to original value
+    const originalSlug = document.getElementById(`slug-text-${urlId}`).textContent;
+    document.getElementById(`edit-input-${urlId}`).value = originalSlug;
+}
+
+async function saveSlug(urlId) {
+    const input = document.getElementById(`edit-input-${urlId}`);
+    const newSlug = input.value.trim();
+    const currentSlug = document.getElementById(`slug-text-${urlId}`).textContent;
 
     if (!newSlug || newSlug === currentSlug) {
-        return; // User cancelled or didn't change
+        cancelEdit(urlId);
+        return;
     }
 
     // Validate slug format
     if (!/^[a-z0-9-]+$/.test(newSlug)) {
         alert('Slug can only contain lowercase letters, numbers, and hyphens');
+        input.focus();
         return;
     }
 
     if (newSlug.length > 50) {
         alert('Slug must be 50 characters or less');
+        input.focus();
         return;
     }
+
+    // Disable the input and buttons while saving
+    input.disabled = true;
+    const saveBtn = event.target;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
 
     try {
         const response = await fetch(`/api/edit-slug/${urlId}`, {
@@ -76,16 +150,43 @@ async function editSlug(urlId, currentSlug) {
         const data = await response.json();
 
         if (data.success) {
-            alert(`Slug updated successfully!\nOld: ${data.old_slug}\nNew: ${data.new_slug}`);
-            // Reload the page to show updated slug
-            location.reload();
+            // Update the slug text
+            document.getElementById(`slug-text-${urlId}`).textContent = data.new_slug;
+            // Hide edit section and show display
+            cancelEdit(urlId);
+            // Show success message
+            showFlashMessage('Slug updated successfully!', 'success');
         } else {
             alert('Error: ' + (data.error || 'Failed to update slug'));
+            input.disabled = false;
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save';
         }
     } catch (error) {
         console.error('Error editing slug:', error);
         alert('Error editing slug: ' + error.message);
+        input.disabled = false;
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
     }
+}
+
+function showFlashMessage(message, type) {
+    const flash = document.createElement('div');
+    flash.className = `flash flash-${type}`;
+    flash.textContent = message;
+    flash.style.position = 'fixed';
+    flash.style.top = '20px';
+    flash.style.right = '20px';
+    flash.style.zIndex = '1000';
+    flash.style.maxWidth = '400px';
+    document.body.appendChild(flash);
+
+    setTimeout(() => {
+        flash.style.opacity = '0';
+        flash.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => flash.remove(), 300);
+    }, 3000);
 }
 </script>
 {% endblock %}

@@ -1,9 +1,11 @@
-from flask import Blueprint, request, jsonify, Response, stream_with_context
-from flask_login import current_user
+from flask import Blueprint, request, jsonify, Response, stream_with_context, send_file
+from flask_login import current_user, login_required
 from app import db
 from app.models.url import URL
 from app.services.url_validator import validate_url
 from app.services.slug_generator import generate_slug_options
+import qrcode
+from io import BytesIO
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -173,3 +175,48 @@ def edit_slug(url_id):
             jsonify({"success": False, "error": f"An error occurred: {str(e)}"}),
             500,
         )
+
+
+@bp.route("/qrcode/<int:url_id>", methods=["GET"])
+@login_required
+def generate_qrcode(url_id):
+    """Generate QR code for a shortened URL."""
+    try:
+        # Get the URL and verify ownership
+        url_obj = URL.query.get_or_404(url_id)
+
+        # Check if the user owns this URL
+        if url_obj.user_id != current_user.id:
+            return jsonify({"success": False, "error": "Unauthorized"}), 403
+
+        # Generate the short URL
+        short_url = request.host_url + url_obj.slug
+
+        # Create QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(short_url)
+        qr.make(fit=True)
+
+        # Create image
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # Save to BytesIO
+        img_io = BytesIO()
+        img.save(img_io, "PNG")
+        img_io.seek(0)
+
+        # Return image file
+        return send_file(
+            img_io,
+            mimetype="image/png",
+            as_attachment=True,
+            download_name=f"qrcode-{url_obj.slug}.png",
+        )
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"An error occurred: {str(e)}"}), 500

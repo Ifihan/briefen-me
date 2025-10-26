@@ -15,10 +15,16 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'web.login'
+    login_manager.login_view = "web.login"
+
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        """Remove database session at the end of the request or when the application shuts down."""
+        db.session.remove()
 
     # Register blueprints
     from app.routes import web, api
+
     app.register_blueprint(web.bp)
     app.register_blueprint(api.bp)
 
@@ -32,4 +38,5 @@ def create_app(config_class=Config):
 @login_manager.user_loader
 def load_user(user_id):
     from app.models.user import User
+
     return User.query.get(int(user_id))

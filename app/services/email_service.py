@@ -171,14 +171,17 @@ Briefen - AI that makes your links speak
             timeout=10,
         )
 
-        if response.status_code == 200:
-            current_app.logger.info(f"Password reset email sent to {user_email}")
-            return True
-        else:
-            current_app.logger.error(
-                f"Failed to send email: {response.status_code} - {response.text}"
-            )
-            return False
+        try:
+            if response.status_code == 200:
+                current_app.logger.info(f"Password reset email sent to {user_email}")
+                return True
+            else:
+                current_app.logger.error(
+                    f"Failed to send email: {response.status_code} - {response.text}"
+                )
+                return False
+        finally:
+            response.close()
 
     except Exception as e:
         current_app.logger.error(f"Error sending password reset email: {str(e)}")

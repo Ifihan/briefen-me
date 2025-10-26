@@ -31,3 +31,8 @@ class Config:
     # Caching
     CACHE_TYPE = os.getenv("CACHE_TYPE", "simple")
     CACHE_DEFAULT_TIMEOUT = 300
+
+    # Mailgun Email Configuration
+    MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
+    MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN", "mail.briefen.me")
+    MAILGUN_FROM_EMAIL = os.getenv("MAILGUN_FROM_EMAIL", "Briefen <noreply@mail.briefen.me>")

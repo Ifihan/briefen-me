@@ -3,6 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
 from app.models.url import URL
+from app.services.email_service import send_password_reset_email
 from datetime import datetime
 
 bp = Blueprint('web', __name__)
@@ -70,13 +71,35 @@ def login():
 
 @bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
-    """Forgot password page (functionality to be implemented)."""
+    """Forgot password page - send password reset email."""
     if current_user.is_authenticated:
         return redirect(url_for('web.dashboard'))
 
     if request.method == 'POST':
-        email = request.form.get('email')
-        # TODO: Implement email functionality
+        email = request.form.get('email', '').strip().lower()
+
+        if not email:
+            flash('Please enter your email address', 'error')
+            return render_template('forgot_password.html')
+
+        # Find user by email
+        user = User.query.filter_by(email=email).first()
+
+        # Always show success message (security best practice - don't reveal if email exists)
+        if user:
+            # Generate reset token
+            reset_token = user.generate_reset_token()
+            db.session.commit()
+
+            # Send reset email
+            email_sent = send_password_reset_email(user.email, reset_token)
+
+            if not email_sent:
+                # Log error but still show success to user
+                flash('There was a problem sending the email. Please try again later.', 'error')
+                return render_template('forgot_password.html')
+
+        # Always show confirmation page (even if email doesn't exist)
         return render_template('forgot_password_confirmation.html', email=email)
 
     return render_template('forgot_password.html')
@@ -84,10 +107,43 @@ def forgot_password():
 
 @bp.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    """Reset password page (functionality to be implemented)."""
-    # TODO: Implement token validation and password reset
-    flash('Password reset functionality coming soon!', 'info')
-    return redirect(url_for('web.login'))
+    """Reset password page with token validation."""
+    if current_user.is_authenticated:
+        return redirect(url_for('web.dashboard'))
+
+    # Find user by reset token
+    user = User.find_by_reset_token(token)
+
+    if not user or not user.verify_reset_token(token):
+        flash('Invalid or expired reset link. Please request a new one.', 'error')
+        return redirect(url_for('web.forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        # Validate password
+        if not password:
+            flash('Please enter a new password', 'error')
+            return render_template('reset_password.html', token=token)
+
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long', 'error')
+            return render_template('reset_password.html', token=token)
+
+        if password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return render_template('reset_password.html', token=token)
+
+        # Update password and clear reset token
+        user.set_password(password)
+        user.clear_reset_token()
+        db.session.commit()
+
+        flash('Password reset successful! Please log in with your new password.', 'success')
+        return redirect(url_for('web.login'))
+
+    return render_template('reset_password.html', token=token)
 
 
 @bp.route('/logout')

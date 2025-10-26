@@ -13,37 +13,40 @@
         <p>Briefen creates smart, readable short URLs by analyzing your content with AI. Get meaningful links that your audience will trust.</p>
     </div>
 
-    <div class="shortener-form">
+    <div class="shortener-form" role="search">
+        <label for="url-input" class="visually-hidden">Enter URL to shorten</label>
         <input
             type="url"
             id="url-input"
             placeholder="Paste your long URL here..."
             aria-label="Enter URL to shorten"
+            aria-describedby="url-input-hint"
             required
         >
-        <button type="button" id="generate-btn">✨ Generate Smart Links</button>
+        <span id="url-input-hint" class="visually-hidden">Paste a long URL to generate a smart, readable short link</span>
+        <button type="button" id="generate-btn" aria-label="Generate smart short links from URL">✨ Generate Smart Links</button>
     </div>
 
-    <div id="progress-section" class="hidden">
+    <div id="progress-section" class="hidden" role="status" aria-live="polite" aria-atomic="true">
         <div class="progress-messages">
             <p id="status-message">Processing...</p>
         </div>
     </div>
 
-    <div id="options-section" class="hidden">
-        <h3>Choose your preferred short link:</h3>
-        <div id="slug-options" class="slug-options">
+    <div id="options-section" class="hidden" role="region" aria-labelledby="options-heading">
+        <h3 id="options-heading">Choose your preferred short link:</h3>
+        <div id="slug-options" class="slug-options" role="radiogroup" aria-label="Available short link options">
             <!-- Options will be inserted here by JavaScript -->
         </div>
-        <button type="button" id="create-btn" class="hidden">Create Short Link</button>
+        <button type="button" id="create-btn" class="hidden" aria-label="Create selected short link">Create Short Link</button>
     </div>
 
-    <div id="result-section" class="hidden">
+    <div id="result-section" class="hidden" role="region" aria-labelledby="result-heading" aria-live="polite">
         <div class="result-card">
-            <h3>Your Short Link is Ready!</h3>
+            <h3 id="result-heading">Your Short Link is Ready!</h3>
             <div class="short-url-display">
                 <input type="text" id="short-url-result" readonly aria-label="Generated short URL">
-                <button type="button" id="copy-btn">Copy</button>
+                <button type="button" id="copy-btn" aria-label="Copy short URL to clipboard">Copy</button>
             </div>
             <p class="original-url">Original: <span id="original-url"></span></p>
 

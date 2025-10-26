@@ -67,7 +67,7 @@
       },
       "creator": {
         "@type": "Person",
-        "name": "Ifihan Olusheye",
+        "name": "Ifihanagbara Olusheye",
         "url": "https://ifihan.com",
         "sameAs": [
           "https://twitter.com/Ifihan_",
@@ -85,7 +85,9 @@
     </script>
 </head>
 <body>
-    <nav class="navbar">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="container">
             <a href="{{ url_for('web.index') }}" class="logo">
                 <span class="logo-icon">✨</span>
@@ -117,10 +119,10 @@
         </div>
     </nav>
 
-    <main class="main-content">
+    <main id="main-content" class="main-content" role="main">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="flash-messages">
+                <div class="flash-messages" role="alert" aria-live="polite" aria-atomic="true">
                     {% for category, message in messages %}
                         <div class="flash flash-{{ category }}">{{ message }}</div>
                     {% endfor %}
@@ -131,7 +133,7 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer">
+    <footer class="footer" role="contentinfo">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-brand">

@@ -98,6 +98,60 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Accessibility: Skip to main content link */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    background: var(--primary);
+    color: white;
+    padding: var(--space-2) var(--space-4);
+    text-decoration: none;
+    border-radius: 0 0 var(--radius-md) 0;
+    z-index: 9999;
+    font-weight: 600;
+    transition: top var(--transition-base);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.skip-link:focus {
+    top: 0;
+    opacity: 1;
+    pointer-events: auto;
+    outline: 3px solid var(--accent-500);
+    outline-offset: 2px;
+}
+
+/* Global focus styles for accessibility */
+*:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Enhanced focus for interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Visually hidden but accessible to screen readers */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;

@@ -34,6 +34,7 @@ def generate_slugs():
             for update in generate_slug_options(long_url):
                 yield f"data: {update}\n\n"
         except Exception as e:
+            db.session.rollback()
             yield f"data: {{'error': '{str(e)}'}}\n\n"
 
     return Response(
@@ -90,6 +91,7 @@ def create_short_url():
         )
 
     except Exception as e:
+        db.session.rollback()
         return jsonify({"success": False, "error": f"An error occurred: {str(e)}"}), 500
 
 
@@ -171,6 +173,7 @@ def edit_slug(url_id):
         )
 
     except Exception as e:
+        db.session.rollback()
         return (
             jsonify({"success": False, "error": f"An error occurred: {str(e)}"}),
             500,
@@ -181,6 +184,7 @@ def edit_slug(url_id):
 @login_required
 def generate_qrcode(url_id):
     """Generate QR code for a shortened URL."""
+    img_io = None
     try:
         # Get the URL and verify ownership
         url_obj = URL.query.get_or_404(url_id)
@@ -219,4 +223,7 @@ def generate_qrcode(url_id):
         )
 
     except Exception as e:
+        db.session.rollback()
+        if img_io:
+            img_io.close()
         return jsonify({"success": False, "error": f"An error occurred: {str(e)}"}), 500

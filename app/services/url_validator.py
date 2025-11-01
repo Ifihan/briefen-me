@@ -6,24 +6,29 @@ import ipaddress
 def validate_url(url):
     """
     Validate and sanitize user-submitted URLs.
-    Returns (is_valid, error_message) tuple.
+    Returns (is_valid, error_message, normalized_url) tuple.
+    The normalized_url will be None if validation fails.
     """
     if not url:
-        return False, "URL cannot be empty"
+        return False, "URL cannot be empty", None
+
+    # Auto-prepend https:// if no scheme is provided
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
 
     # Check URL format
     try:
         parsed = urlparse(url)
     except Exception:
-        return False, "Invalid URL format"
+        return False, "Invalid URL format", None
 
     # Ensure scheme is HTTP or HTTPS
     if parsed.scheme not in ['http', 'https']:
-        return False, "Only HTTP and HTTPS URLs are allowed"
+        return False, "Only HTTP and HTTPS URLs are allowed", None
 
     # Ensure there's a hostname
     if not parsed.netloc:
-        return False, "Invalid URL: missing hostname"
+        return False, "Invalid URL: missing hostname", None
 
     # Check for private/internal IP addresses (SSRF prevention)
     try:
@@ -35,7 +40,7 @@ def validate_url(url):
 
         # Block private IP ranges
         if ip.is_private or ip.is_loopback or ip.is_link_local:
-            return False, "Private/internal IP addresses are not allowed"
+            return False, "Private/internal IP addresses are not allowed", None
     except ValueError:
         # Not an IP address, it's a domain name - that's fine
         pass
@@ -52,10 +57,10 @@ def validate_url(url):
     hostname = parsed.netloc.split(':')[0].lower()
     for pattern in localhost_patterns:
         if re.match(pattern, hostname):
-            return False, "Localhost URLs are not allowed"
+            return False, "Localhost URLs are not allowed", None
 
     # URL length check
     if len(url) > 2048:
-        return False, "URL is too long (max 2048 characters)"
+        return False, "URL is too long (max 2048 characters)", None
 
-    return True, None
+    return True, None, url

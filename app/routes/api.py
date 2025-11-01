@@ -23,15 +23,15 @@ def generate_slugs():
         return jsonify({"error": "URL is required"}), 400
 
     # Validate URL
-    is_valid, error_message = validate_url(long_url)
+    is_valid, error_message, normalized_url = validate_url(long_url)
     if not is_valid:
         return jsonify({"error": error_message}), 400
 
     def generate():
         """Stream generation process updates."""
         try:
-            # Use the slug generator service
-            for update in generate_slug_options(long_url):
+            # Use the slug generator service with normalized URL
+            for update in generate_slug_options(normalized_url):
                 yield f"data: {update}\n\n"
         except Exception as e:
             db.session.rollback()
@@ -62,8 +62,8 @@ def create_short_url():
                 400,
             )
 
-        # Validate URL again
-        is_valid, error_message = validate_url(long_url)
+        # Validate URL again and get normalized version
+        is_valid, error_message, normalized_url = validate_url(long_url)
         if not is_valid:
             return jsonify({"success": False, "error": error_message}), 400
 
@@ -72,7 +72,7 @@ def create_short_url():
             return jsonify({"success": False, "error": "Slug already taken"}), 400
 
         user_id = current_user.id if current_user.is_authenticated else None
-        new_url = URL(original_url=long_url, slug=slug, user_id=user_id)
+        new_url = URL(original_url=normalized_url, slug=slug, user_id=user_id)
 
         db.session.add(new_url)
         db.session.commit()
@@ -84,7 +84,7 @@ def create_short_url():
                     "url_id": new_url.id,
                     "slug": slug,
                     "short_url": request.host_url + slug,
-                    "original_url": long_url,
+                    "original_url": normalized_url,
                 }
             ),
             201,

@@ -23,11 +23,16 @@ const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
 // Generate slug options
 generateBtn.addEventListener('click', async () => {
-    const url = urlInput.value.trim();
+    let url = urlInput.value.trim();
 
     if (!url) {
         alert('Please enter a URL');
         return;
+    }
+
+    // Auto-prepend https:// if no scheme is provided
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
     }
 
     // Validate URL format

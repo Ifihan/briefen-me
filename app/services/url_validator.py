@@ -2,6 +2,8 @@ import ipaddress
 import re
 from typing import Optional, Tuple
 from urllib.parse import urlparse
+import ipaddress
+from app.services.url_cleaner import remove_tracking_parameters
 
 
 def validate_url(url: str) -> Tuple[bool, Optional[str], Optional[str]]:
@@ -60,7 +62,8 @@ def validate_url(url: str) -> Tuple[bool, Optional[str], Optional[str]]:
         if re.match(pattern, hostname):
             return False, "Localhost URLs are not allowed", None
 
-    # URL length check
+    url = remove_tracking_parameters(url)
+
     if len(url) > 2048:
         return False, "URL is too long (max 2048 characters)", None
 

@@ -1,17 +1,28 @@
-from flask import Blueprint, request, jsonify, Response, stream_with_context, send_file, current_app
+from io import BytesIO
+from typing import Iterator, Tuple
+
+import qrcode
+from flask import (
+    Blueprint,
+    Response,
+    current_app,
+    jsonify,
+    request,
+    send_file,
+    stream_with_context,
+)
 from flask_login import current_user, login_required
+
 from app import db
 from app.models.url import URL
-from app.services.url_validator import validate_url
 from app.services.slug_generator import generate_slug_options
-import qrcode
-from io import BytesIO
+from app.services.url_validator import validate_url
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
 
 @bp.route("/generate-slugs", methods=["POST"])
-def generate_slugs():
+def generate_slugs() -> Response:
     """
     Generate AI-powered slug options for a URL.
     Returns Server-Sent Events stream for real-time updates.
@@ -27,21 +38,9 @@ def generate_slugs():
     if not is_valid:
         return jsonify({"error": error_message}), 400
 
-    # If AI thinking mode requires Gemini, ensure the GEMINI_API_KEY is configured
-    ai_mode = current_app.config.get("AI_THINKING_MODE", "hardcoded")
-    if ai_mode == "ai_generated" and not current_app.config.get("GEMINI_API_KEY"):
-        return (
-            jsonify(
-                {
-                    "status": "error",
-                    "message": "AI is configured to generate slugs but GEMINI_API_KEY is not set. Please configure the GEMINI_API_KEY environment variable.",
-                    "error_type": "missing_api_key",
-                }
-            ),
-            400,
-        )
+    # AI configuration checks are handled in the AI service; proceed with generation.
 
-    def generate():
+    def generate() -> Iterator[str]:
         """Stream generation process updates."""
         try:
             # Use the slug generator service with normalized URL
@@ -59,7 +58,7 @@ def generate_slugs():
 
 
 @bp.route("/create-short-url", methods=["POST"])
-def create_short_url():
+def create_short_url() -> Tuple[Response, int]:
     """Create a shortened URL with the selected slug."""
     try:
         data = request.get_json()
@@ -95,10 +94,26 @@ def create_short_url():
                 400,
             )
 
-        max_len = current_app.config.get("MAX_SLUG_LENGTH", 50)
+        max_len = current_app.config.get("MAX_SLUG_LENGTH")
+        if not isinstance(max_len, int):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Server misconfiguration: MAX_SLUG_LENGTH is not set",
+                    }
+                ),
+                500,
+            )
+
         if len(slug) > max_len:
             return (
-                jsonify({"success": False, "error": f"Slug must be {max_len} characters or less"}),
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"Slug must be {max_len} characters or less",
+                    }
+                ),
                 400,
             )
 
@@ -112,8 +127,17 @@ def create_short_url():
         db.session.add(new_url)
         db.session.commit()
 
-        # Build short URL using configured BASE_URL if present, otherwise request.host_url
-        base = current_app.config.get("BASE_URL") or request.host_url
+        base = current_app.config.get("BASE_URL")
+        if not base:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Server misconfiguration: BASE_URL is not set",
+                    }
+                ),
+                500,
+            )
         short_url = base.rstrip("/") + "/" + slug
 
         return (
@@ -135,7 +159,7 @@ def create_short_url():
 
 
 @bp.route("/edit-slug/<int:url_id>", methods=["PUT"])
-def edit_slug(url_id):
+def edit_slug(url_id: int) -> Tuple[Response, int]:
     """Edit the slug of an existing shortened URL."""
     try:
         data = request.get_json()
@@ -161,10 +185,25 @@ def edit_slug(url_id):
                 400,
             )
 
-        if len(new_slug) > 50:
+        max_len = current_app.config.get("MAX_SLUG_LENGTH")
+        if not isinstance(max_len, int):
             return (
                 jsonify(
-                    {"success": False, "error": "Slug must be 50 characters or less"}
+                    {
+                        "success": False,
+                        "error": "Server misconfiguration: MAX_SLUG_LENGTH is not set",
+                    }
+                ),
+                500,
+            )
+
+        if len(new_slug) > max_len:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"Slug must be {max_len} characters or less",
+                    }
                 ),
                 400,
             )
@@ -174,19 +213,16 @@ def edit_slug(url_id):
         if current_user.is_authenticated:
             if url_obj.user_id != current_user.id:
                 return (
-                    jsonify(
-                        {"success": False, "error": "Unauthorized to edit this link"}
-                    ),
+                    jsonify({"success": False, "error": "Unauthorized to edit this link"}),
                     403,
                 )
         else:
             if url_obj.user_id is not None:
                 return (
-                    jsonify(
-                        {"success": False, "error": "Unauthorized to edit this link"}
-                    ),
+                    jsonify({"success": False, "error": "Unauthorized to edit this link"}),
                     403,
                 )
+
         existing = URL.query.filter_by(slug=new_slug).first()
         if existing and existing.id != url_id:
             return (
@@ -198,7 +234,17 @@ def edit_slug(url_id):
         url_obj.slug = new_slug
         db.session.commit()
 
-        base = current_app.config.get("BASE_URL") or request.host_url
+        base = current_app.config.get("BASE_URL")
+        if not base:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Server misconfiguration: BASE_URL is not set",
+                    }
+                ),
+                500,
+            )
         short_url = base.rstrip("/") + "/" + new_slug
 
         return (
@@ -224,7 +270,7 @@ def edit_slug(url_id):
 
 @bp.route("/qrcode/<int:url_id>", methods=["GET"])
 @login_required
-def generate_qrcode(url_id):
+def generate_qrcode(url_id: int) -> Response:
     """Generate QR code for a shortened URL."""
     img_io = None
     try:
@@ -235,8 +281,17 @@ def generate_qrcode(url_id):
         if url_obj.user_id != current_user.id:
             return jsonify({"success": False, "error": "Unauthorized"}), 403
 
-        # Generate the short URL
-        base = current_app.config.get("BASE_URL") or request.host_url
+        base = current_app.config.get("BASE_URL")
+        if not base:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Server misconfiguration: BASE_URL is not set",
+                    }
+                ),
+                500,
+            )
         short_url = base.rstrip("/") + "/" + url_obj.slug
 
         # Create QR code

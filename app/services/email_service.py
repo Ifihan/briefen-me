@@ -176,9 +176,7 @@ Briefen - AI that makes your links speak
                 current_app.logger.info(f"Password reset email sent to {user_email}")
                 return True
             else:
-                current_app.logger.error(
-                    f"Failed to send email: {response.status_code} - {response.text}"
-                )
+                current_app.logger.error(f"Failed to send email: {response.status_code} - {response.text}")
                 return False
         finally:
             response.close()

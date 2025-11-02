@@ -1,33 +1,15 @@
+import json
+import re
+import time
+from typing import Generator, List
+
 import google.generativeai as genai
 from flask import current_app
-import re
-import json
-import time
 
-# Phrases that indicate a JS placeholder rather than real content
-_PLACEHOLDER_PATTERNS = [
-    r"enable javascript",
-    r"turn on javascript",
-    r"javascript is disabled",
-    r"please enable javascript",
-    r"js-disabled",
-    r"enable-javascript",
-    r"x-javascript-error",
-]
+from app.constants.patterns import content_is_placeholder
 
 
-def content_is_placeholder(text: str) -> bool:
-    """Return True if the text looks like a JS placeholder message."""
-    if not text:
-        return False
-    lower = re.sub(r"[^a-z0-9\s-]", " ", text.lower())
-    for pat in _PLACEHOLDER_PATTERNS:
-        if re.search(pat, lower):
-            return True
-    return False
-
-
-def configure_gemini():
+def configure_gemini() -> None:
     """Configure Gemini AI with API key."""
     api_key = current_app.config.get("GEMINI_API_KEY")
     if not api_key:
@@ -35,7 +17,9 @@ def configure_gemini():
     genai.configure(api_key=api_key)
 
 
-def generate_slugs_with_thinking(title, description, content, num_options=5):
+def generate_slugs_with_thinking(
+    title: str, description: str, content: str, num_options: int = 5
+) -> Generator[str, None, None]:
     """
     Use Gemini AI to generate slug options with chain-of-thought streaming.
     Yields thinking messages and final slugs.
@@ -135,11 +119,19 @@ def generate_slugs_with_thinking(title, description, content, num_options=5):
         raise Exception(f"AI generation failed: {str(e)}")
 
 
-def generate_slugs_with_ai_thinking(title, description, content, num_options=5):
+def generate_slugs_with_ai_thinking(
+    title: str, description: str, content: str, num_options: int = 5
+) -> Generator[str, None, None]:
     """
     Use Gemini AI to generate slug options with REAL AI-generated chain-of-thought.
     This uses Gemini's streaming API to get actual AI reasoning.
     """
+    combined = " ".join(filter(None, [title, description, content]))
+    if content_is_placeholder(combined):
+        raise Exception(
+            "Content appears to be a JavaScript placeholder (e.g. 'Enable JavaScript'). Please provide a URL that returns real text or ensure the scraper can access the page."
+        )
+
     combined = " ".join(filter(None, [title, description, content]))
     if content_is_placeholder(combined):
         raise Exception(
@@ -190,27 +182,15 @@ def generate_slugs_with_ai_thinking(title, description, content, num_options=5):
             if chunk.text:
                 full_response += chunk.text
 
-                if (
-                    "THINKING:" in full_response
-                    and "KEYWORDS:" not in full_response
-                    and not thinking_shown
-                ):
+                if "THINKING:" in full_response and "KEYWORDS:" not in full_response and not thinking_shown:
                     thinking = full_response.split("THINKING:")[1].strip()
                     if thinking and len(thinking) > 10:
-                        yield json.dumps(
-                            {"type": "thinking", "message": f"🤔 {thinking[:150]}..."}
-                        )
+                        yield json.dumps({"type": "thinking", "message": f"🤔 {thinking[:150]}..."})
                         time.sleep(1.0)
                         thinking_shown = True
 
-                elif (
-                    "KEYWORDS:" in full_response
-                    and "SLUGS:" not in full_response
-                    and not keywords_shown
-                ):
-                    keywords = (
-                        full_response.split("KEYWORDS:")[1].split("SLUGS:")[0].strip()
-                    )
+                elif "KEYWORDS:" in full_response and "SLUGS:" not in full_response and not keywords_shown:
+                    keywords = full_response.split("KEYWORDS:")[1].split("SLUGS:")[0].strip()
                     if keywords and len(keywords) > 5:
                         yield json.dumps(
                             {
@@ -258,11 +238,17 @@ def generate_slugs_with_ai_thinking(title, description, content, num_options=5):
         raise Exception(f"AI generation failed: {str(e)}")
 
 
-def generate_slugs_from_content(title, description, content, num_options=5):
+def generate_slugs_from_content(title: str, description: str, content: str, num_options: int = 5) -> List[str]:
     """
     Use Gemini AI to generate slug options based on webpage content.
     Returns list of slug strings.
     """
+    combined = " ".join(filter(None, [title, description, content]))
+    if content_is_placeholder(combined):
+        raise Exception(
+            "Content appears to be a JavaScript placeholder (e.g. 'Enable JavaScript'). Aborting slug generation."
+        )
+
     combined = " ".join(filter(None, [title, description, content]))
     if content_is_placeholder(combined):
         raise Exception(

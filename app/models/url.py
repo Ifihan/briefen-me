@@ -1,6 +1,8 @@
 from datetime import datetime
-from app import db
+
 from flask import current_app
+
+from app import db
 
 
 class URL(db.Model):
@@ -15,7 +17,7 @@ class URL(db.Model):
     click_count = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    def increment_clicks(self):
+    def increment_clicks(self) -> None:
         """Increment the click counter with error handling."""
         try:
             self.click_count += 1
@@ -23,10 +25,8 @@ class URL(db.Model):
         except Exception as e:
             db.session.rollback()
             if current_app:
-                current_app.logger.error(
-                    f"Failed to increment click count for {self.slug}: {str(e)}"
-                )
+                current_app.logger.error(f"Failed to increment click count for {self.slug}: {str(e)}")
             raise
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<URL {self.slug} -> {self.original_url[:50]}>"

@@ -1,14 +1,17 @@
 import json
+from typing import Iterator
+
 from flask import current_app
+
 from app.models.url import URL
-from app.services.web_scraper import scrape_webpage
 from app.services.ai_service import (
-    generate_slugs_with_thinking,
     generate_slugs_with_ai_thinking,
+    generate_slugs_with_thinking,
 )
+from app.services.web_scraper import scrape_webpage
 
 
-def generate_slug_options(url):
+def generate_slug_options(url: str) -> Iterator[str]:
     """
     Main service to generate slug options with real-time updates and chain-of-thought.
     """
@@ -16,18 +19,14 @@ def generate_slug_options(url):
     options_per_batch = current_app.config.get("SLUG_OPTIONS_PER_BATCH", 5)
 
     # Fetch webpage
-    yield json.dumps(
-        {"status": "progress", "message": "🌐 Fetching webpage content..."}
-    )
+    yield json.dumps({"status": "progress", "message": "🌐 Fetching webpage content..."})
     scraped_data = scrape_webpage(url)
 
     if not scraped_data["success"]:
         error_type = scraped_data.get("error_type", "unknown")
         error_message = scraped_data["error"]
 
-        yield json.dumps(
-            {"status": "error", "message": error_message, "error_type": error_type}
-        )
+        yield json.dumps({"status": "error", "message": error_message, "error_type": error_type})
         return
 
     available_slugs = []
@@ -57,9 +56,7 @@ def generate_slug_options(url):
                 update_data = json.loads(ai_update)
 
                 if update_data["type"] == "thinking":
-                    yield json.dumps(
-                        {"status": "progress", "message": update_data["message"]}
-                    )
+                    yield json.dumps({"status": "progress", "message": update_data["message"]})
                 elif update_data["type"] == "slugs":
                     ai_slugs = update_data["slugs"]
 
@@ -79,10 +76,7 @@ def generate_slug_options(url):
             existing_slug_set = {url.slug for url in existing_slugs}
 
             for candidate in ai_slugs:
-                if (
-                    candidate not in existing_slug_set
-                    and candidate not in available_slugs
-                ):
+                if candidate not in existing_slug_set and candidate not in available_slugs:
                     available_slugs.append(candidate)
                     if len(available_slugs) >= 3:
                         break

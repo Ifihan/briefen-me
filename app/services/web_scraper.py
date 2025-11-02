@@ -1,22 +1,60 @@
+import re
+from typing import Any, Dict
+from urllib.parse import quote_plus, urlparse
+
 import requests
 from bs4 import BeautifulSoup
-from requests.exceptions import Timeout, ConnectionError, HTTPError, TooManyRedirects
+from requests.exceptions import ConnectionError, HTTPError, Timeout, TooManyRedirects
+
+from app.constants.patterns import PLACEHOLDER_PATTERNS
 
 
-def scrape_webpage(url, timeout=15):
+def scrape_webpage(url: str, timeout: int = 15) -> Dict[str, Any]:
     """
     Scrape webpage content for AI analysis with comprehensive error handling.
     Returns dict with title, description, and main content.
     """
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (compatible; BriefenMe/1.0; +http://briefen.me)"
-        }
+        headers = {"User-Agent": "Mozilla/5.0 (compatible; BriefenMe/1.0; +http://briefen.me)"}
         with requests.Session() as session:
             session.max_redirects = 5
-            response = session.get(
-                url, headers=headers, timeout=timeout, allow_redirects=True
-            )
+            parsed = urlparse(url)
+            hostname = parsed.hostname or ""
+            path = parsed.path or ""
+
+            if hostname.endswith("twitter.com") or hostname.endswith("x.com"):
+                if "/status/" in path or "/statuses/" in path:
+                    try:
+                        oembed_url = f"https://publish.twitter.com/oembed?url={quote_plus(url)}&omit_script=1"
+                        resp = session.get(oembed_url, headers=headers, timeout=timeout)
+                        resp.raise_for_status()
+                        data = resp.json()
+
+                        html = data.get("html", "")
+                        author_name = data.get("author_name", "Twitter")
+
+                        if html:
+                            soup_emb = BeautifulSoup(html, "html.parser")
+                            tweet_text = soup_emb.get_text(separator=" ", strip=True)
+                        else:
+                            tweet_text = ""
+
+                        title = f"{author_name} on Twitter"
+                        description = tweet_text[:160]
+                        content = tweet_text
+
+                        if content:
+                            return {
+                                "success": True,
+                                "title": title,
+                                "description": description,
+                                "content": content,
+                                "url": url,
+                            }
+                    except Exception:
+                        pass
+
+            response = session.get(url, headers=headers, timeout=timeout, allow_redirects=True)
 
             if response.status_code == 401:
                 return {
@@ -71,6 +109,18 @@ def scrape_webpage(url, timeout=15):
                 script.decompose()
 
             main_text = soup.get_text(separator=" ", strip=True)[:1000]
+
+            lower_text = re.sub(r"[^a-z0-9\s-]", " ", main_text.lower())
+            for pat in PLACEHOLDER_PATTERNS:
+                if re.search(pat, lower_text):
+                    return {
+                        "success": False,
+                        "error": (
+                            "This page appears to require JavaScript to render its content "
+                            "(e.g. 'Enable JavaScript'). We couldn't extract meaningful content."
+                        ),
+                        "error_type": "content_unavailable",
+                    }
 
             if not title and not description and len(main_text) < 50:
                 return {

@@ -1,12 +1,4 @@
-from flask import (
-    Blueprint,
-    request,
-    jsonify,
-    Response,
-    stream_with_context,
-    send_file,
-    current_app,
-)
+from flask import Blueprint, request, jsonify, Response, stream_with_context, send_file, current_app
 from flask_login import current_user, login_required
 from app import db
 from app.models.url import URL

@@ -40,6 +40,10 @@ class Config:
     CACHE_TYPE = os.getenv("CACHE_TYPE", "simple")
     CACHE_DEFAULT_TIMEOUT = 300
 
+    # Optional canonical base URL for short links (e.g. https://briefen.me)
+    # If set, the app will use this when constructing short URLs instead of request.host_url
+    BASE_URL = os.getenv("BASE_URL")
+
     # Mailgun Email Configuration
     MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
     MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN", "mail.briefen.me")

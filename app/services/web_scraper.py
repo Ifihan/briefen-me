@@ -1,6 +1,20 @@
 import requests
 from bs4 import BeautifulSoup
 from requests.exceptions import Timeout, ConnectionError, HTTPError, TooManyRedirects
+from urllib.parse import urlparse, quote_plus
+import json
+import re
+
+# Patterns that indicate the page is a JavaScript placeholder rather than real content
+_PLACEHOLDER_PATTERNS = [
+    r"enable javascript",
+    r"turn on javascript",
+    r"javascript is disabled",
+    r"please enable javascript",
+    r"js-disabled",
+    r"enable-javascript",
+    r"x-javascript-error",
+]
 
 
 def scrape_webpage(url, timeout=15):
@@ -14,6 +28,54 @@ def scrape_webpage(url, timeout=15):
         }
         with requests.Session() as session:
             session.max_redirects = 5
+
+            # Special-case: Twitter / X tweets often require JS to render and
+            # return a placeholder page. Use Twitter's oEmbed endpoint as a
+            # reliable fallback to extract the tweet text and author.
+            parsed = urlparse(url)
+            hostname = parsed.hostname or ""
+            path = parsed.path or ""
+
+            if hostname.endswith("twitter.com") or hostname.endswith("x.com"):
+                # detect status (tweet) URLs
+                if "/status/" in path or "/statuses/" in path:
+                    try:
+                        oembed_url = (
+                            f"https://publish.twitter.com/oembed?url={quote_plus(url)}&omit_script=1"
+                        )
+                        resp = session.get(oembed_url, headers=headers, timeout=timeout)
+                        resp.raise_for_status()
+                        data = resp.json()
+
+                        html = data.get("html", "")
+                        author_name = data.get("author_name", "Twitter")
+
+                        # Extract tweet text from returned HTML
+                        if html:
+                            soup_emb = BeautifulSoup(html, "html.parser")
+                            tweet_text = soup_emb.get_text(separator=" ", strip=True)
+                        else:
+                            tweet_text = ""
+
+                        title = f"{author_name} on Twitter"
+                        description = tweet_text[:160]
+                        content = tweet_text
+
+                        if not content:
+                            # fall back to normal GET below
+                            pass
+                        else:
+                            return {
+                                "success": True,
+                                "title": title,
+                                "description": description,
+                                "content": content,
+                                "url": url,
+                            }
+                    except Exception:
+                        # If oEmbed fails for any reason, continue to normal fetch
+                        pass
+
             response = session.get(
                 url, headers=headers, timeout=timeout, allow_redirects=True
             )
@@ -71,6 +133,17 @@ def scrape_webpage(url, timeout=15):
                 script.decompose()
 
             main_text = soup.get_text(separator=" ", strip=True)[:1000]
+
+            # If the scraped text looks like a JS placeholder (e.g., "Enable JavaScript"),
+            # return a clear content_unavailable error so upstream can handle it.
+            lower_text = re.sub(r"[^a-z0-9\s-]", " ", main_text.lower())
+            for pat in _PLACEHOLDER_PATTERNS:
+                if re.search(pat, lower_text):
+                    return {
+                        "success": False,
+                        "error": "This page appears to require JavaScript to render its content (e.g. 'Enable JavaScript'). We couldn't extract meaningful content.",
+                        "error_type": "content_unavailable",
+                    }
 
             if not title and not description and len(main_text) < 50:
                 return {

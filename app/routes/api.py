@@ -1,4 +1,12 @@
-from flask import Blueprint, request, jsonify, Response, stream_with_context, send_file
+from flask import (
+    Blueprint,
+    request,
+    jsonify,
+    Response,
+    stream_with_context,
+    send_file,
+    current_app,
+)
 from flask_login import current_user, login_required
 from app import db
 from app.models.url import URL
@@ -26,6 +34,20 @@ def generate_slugs():
     is_valid, error_message, normalized_url = validate_url(long_url)
     if not is_valid:
         return jsonify({"error": error_message}), 400
+
+    # If AI thinking mode requires Gemini, ensure the GEMINI_API_KEY is configured
+    ai_mode = current_app.config.get("AI_THINKING_MODE", "hardcoded")
+    if ai_mode == "ai_generated" and not current_app.config.get("GEMINI_API_KEY"):
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "AI is configured to generate slugs but GEMINI_API_KEY is not set. Please configure the GEMINI_API_KEY environment variable.",
+                    "error_type": "missing_api_key",
+                }
+            ),
+            400,
+        )
 
     def generate():
         """Stream generation process updates."""
@@ -67,6 +89,27 @@ def create_short_url():
         if not is_valid:
             return jsonify({"success": False, "error": error_message}), 400
 
+        import re
+
+        # Validate slug format and length (same rules as edit_slug)
+        if not re.match(r"^[a-z0-9-]+$", slug):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Slug can only contain lowercase letters, numbers, and hyphens",
+                    }
+                ),
+                400,
+            )
+
+        max_len = current_app.config.get("MAX_SLUG_LENGTH", 50)
+        if len(slug) > max_len:
+            return (
+                jsonify({"success": False, "error": f"Slug must be {max_len} characters or less"}),
+                400,
+            )
+
         # Check if slug already exists
         if URL.query.filter_by(slug=slug).first():
             return jsonify({"success": False, "error": "Slug already taken"}), 400
@@ -77,13 +120,17 @@ def create_short_url():
         db.session.add(new_url)
         db.session.commit()
 
+        # Build short URL using configured BASE_URL if present, otherwise request.host_url
+        base = current_app.config.get("BASE_URL") or request.host_url
+        short_url = base.rstrip("/") + "/" + slug
+
         return (
             jsonify(
                 {
                     "success": True,
                     "url_id": new_url.id,
                     "slug": slug,
-                    "short_url": request.host_url + slug,
+                    "short_url": short_url,
                     "original_url": normalized_url,
                 }
             ),
@@ -159,13 +206,16 @@ def edit_slug(url_id):
         url_obj.slug = new_slug
         db.session.commit()
 
+        base = current_app.config.get("BASE_URL") or request.host_url
+        short_url = base.rstrip("/") + "/" + new_slug
+
         return (
             jsonify(
                 {
                     "success": True,
                     "old_slug": old_slug,
                     "new_slug": new_slug,
-                    "short_url": request.host_url + new_slug,
+                    "short_url": short_url,
                     "url_id": url_id,
                 }
             ),
@@ -194,7 +244,8 @@ def generate_qrcode(url_id):
             return jsonify({"success": False, "error": "Unauthorized"}), 403
 
         # Generate the short URL
-        short_url = request.host_url + url_obj.slug
+        base = current_app.config.get("BASE_URL") or request.host_url
+        short_url = base.rstrip("/") + "/" + url_obj.slug
 
         # Create QR code
         qr = qrcode.QRCode(

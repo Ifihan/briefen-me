@@ -4,6 +4,28 @@ import re
 import json
 import time
 
+# Phrases that indicate a JS placeholder rather than real content
+_PLACEHOLDER_PATTERNS = [
+    r"enable javascript",
+    r"turn on javascript",
+    r"javascript is disabled",
+    r"please enable javascript",
+    r"js-disabled",
+    r"enable-javascript",
+    r"x-javascript-error",
+]
+
+
+def content_is_placeholder(text: str) -> bool:
+    """Return True if the text looks like a JS placeholder message."""
+    if not text:
+        return False
+    lower = re.sub(r"[^a-z0-9\s-]", " ", text.lower())
+    for pat in _PLACEHOLDER_PATTERNS:
+        if re.search(pat, lower):
+            return True
+    return False
+
 
 def configure_gemini():
     """Configure Gemini AI with API key."""
@@ -18,6 +40,13 @@ def generate_slugs_with_thinking(title, description, content, num_options=5):
     Use Gemini AI to generate slug options with chain-of-thought streaming.
     Yields thinking messages and final slugs.
     """
+    # If the scraped content looks like a JS placeholder, stop early
+    combined = " ".join(filter(None, [title, description, content]))
+    if content_is_placeholder(combined):
+        raise Exception(
+            "Content appears to be a JavaScript placeholder (e.g. 'Enable JavaScript'). Please provide a URL that returns real text or ensure the scraper can access the page."
+        )
+
     configure_gemini()
 
     yield json.dumps(
@@ -111,6 +140,12 @@ def generate_slugs_with_ai_thinking(title, description, content, num_options=5):
     Use Gemini AI to generate slug options with REAL AI-generated chain-of-thought.
     This uses Gemini's streaming API to get actual AI reasoning.
     """
+    combined = " ".join(filter(None, [title, description, content]))
+    if content_is_placeholder(combined):
+        raise Exception(
+            "Content appears to be a JavaScript placeholder (e.g. 'Enable JavaScript'). Please provide a URL that returns real text or ensure the scraper can access the page."
+        )
+
     configure_gemini()
 
     model = genai.GenerativeModel("gemini-2.0-flash-exp")
@@ -228,6 +263,12 @@ def generate_slugs_from_content(title, description, content, num_options=5):
     Use Gemini AI to generate slug options based on webpage content.
     Returns list of slug strings.
     """
+    combined = " ".join(filter(None, [title, description, content]))
+    if content_is_placeholder(combined):
+        raise Exception(
+            "Content appears to be a JavaScript placeholder (e.g. 'Enable JavaScript'). Aborting slug generation."
+        )
+
     configure_gemini()
 
     model = genai.GenerativeModel("gemini-2.0-flash-lite")

@@ -1,6 +1,7 @@
 import re
 from urllib.parse import urlparse
 import ipaddress
+from app.services.url_cleaner import remove_tracking_parameters
 
 
 def validate_url(url):
@@ -13,8 +14,8 @@ def validate_url(url):
         return False, "URL cannot be empty", None
 
     # Auto-prepend https:// if no scheme is provided
-    if not url.startswith(('http://', 'https://')):
-        url = 'https://' + url
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
 
     # Check URL format
     try:
@@ -23,7 +24,7 @@ def validate_url(url):
         return False, "Invalid URL format", None
 
     # Ensure scheme is HTTP or HTTPS
-    if parsed.scheme not in ['http', 'https']:
+    if parsed.scheme not in ["http", "https"]:
         return False, "Only HTTP and HTTPS URLs are allowed", None
 
     # Ensure there's a hostname
@@ -33,7 +34,7 @@ def validate_url(url):
     # Check for private/internal IP addresses (SSRF prevention)
     try:
         # Extract hostname without port
-        hostname = parsed.netloc.split(':')[0]
+        hostname = parsed.netloc.split(":")[0]
 
         # Try to parse as IP address
         ip = ipaddress.ip_address(hostname)
@@ -47,19 +48,20 @@ def validate_url(url):
 
     # Block localhost variations
     localhost_patterns = [
-        r'^localhost$',
-        r'^127\.',
-        r'^0\.0\.0\.0$',
-        r'^::1$',
-        r'^0:0:0:0:0:0:0:1$'
+        r"^localhost$",
+        r"^127\.",
+        r"^0\.0\.0\.0$",
+        r"^::1$",
+        r"^0:0:0:0:0:0:0:1$",
     ]
 
-    hostname = parsed.netloc.split(':')[0].lower()
+    hostname = parsed.netloc.split(":")[0].lower()
     for pattern in localhost_patterns:
         if re.match(pattern, hostname):
             return False, "Localhost URLs are not allowed", None
 
-    # URL length check
+    url = remove_tracking_parameters(url)
+
     if len(url) > 2048:
         return False, "URL is too long (max 2048 characters)", None
 

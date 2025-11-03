@@ -1,9 +1,21 @@
 import requests
 from bs4 import BeautifulSoup
 from requests.exceptions import Timeout, ConnectionError, HTTPError, TooManyRedirects
+from urllib.parse import urlparse, urlunparse
+from typing import Optional, Dict
+from flask import current_app
 
 
-def scrape_webpage(url, timeout=15):
+# Patterns indicating the page is a JS-only interstitial or placeholder
+_PLACEHOLDER_PATTERNS = [
+    "enable javascript",
+    "js-disabled",
+    "x-javascript-error",
+    "javascript is required",
+]
+
+
+def scrape_webpage(url: str, timeout: int = 15) -> Dict:
     """
     Scrape webpage content for AI analysis with comprehensive error handling.
     Returns dict with title, description, and main content.
@@ -54,6 +66,63 @@ def scrape_webpage(url, timeout=15):
                     "error_type": "invalid_content",
                 }
 
+            # Helper to detect JS-only / JS-block interstitials that mention enabling JS
+            def _looks_like_js_blocked(text: Optional[str]) -> bool:
+                if not text:
+                    return False
+                lower = text.lower()
+                return any(b in lower for b in _PLACEHOLDER_PATTERNS)
+
+            parsed = urlparse(url)
+            host = parsed.netloc.lower() if parsed.netloc else ""
+            fallback_used: Optional[str] = None
+
+            # If the page appears to be JS-only (common with Twitter/X) try configured fallbacks:
+            if _looks_like_js_blocked(response.text) and ("twitter.com" in host or host.endswith("x.com")):
+                try:
+                    # Load fallback hosts from config (comma-separated) or default to ['nitter.net']
+                    fallbacks = current_app.config.get("TWITTER_FALLBACKS", ["nitter.net"])
+                    if isinstance(fallbacks, str):
+                        fallbacks = [h.strip() for h in fallbacks.split(",") if h.strip()]
+
+                    tried = []
+                    for fb in fallbacks:
+                        # Attempt to replace the host with the fallback host
+                        fb_netloc = host.replace("twitter.com", fb).replace("x.com", fb)
+                        fb_parsed = parsed._replace(scheme="https", netloc=fb_netloc)
+                        fb_url = urlunparse(fb_parsed)
+                        tried.append(fb_url)
+                        fb_resp = session.get(fb_url, headers=headers, timeout=timeout)
+                        if fb_resp.status_code == 200 and "text/html" in fb_resp.headers.get("Content-Type", "") and not _looks_like_js_blocked(fb_resp.text):
+                            response = fb_resp
+                            url = fb_url
+                            fallback_used = fb
+                            break
+
+                    # If no mirror returned usable content, try a text proxy if configured
+                    if (not response or _looks_like_js_blocked(response.text)):
+                        text_proxy = current_app.config.get("TEXT_PROXY_URL")
+                        if text_proxy:
+                            # Ensure text_proxy ends with 'http://' so concatenation yields
+                            # e.g. 'https://r.jina.ai/http://'+ 'x.com/path'
+                            tp = text_proxy.strip()
+                            if not tp.endswith("http://") and not tp.endswith("https://"):
+                                tp = tp.rstrip("/") + "/http://"
+
+                            # Build proxy URL by appending netloc+path (no scheme)
+                            proxy_url = tp + parsed.netloc + parsed.path
+                            if parsed.query:
+                                proxy_url += f"?{parsed.query}"
+
+                            proxy_resp = session.get(proxy_url, headers=headers, timeout=timeout)
+                            if proxy_resp.status_code == 200 and len(proxy_resp.text or "") > 50:
+                                response = proxy_resp
+                                url = proxy_url
+                                fallback_used = "text-proxy"
+                except Exception:
+                    # If fallbacks fail, continue and allow later checks to handle the no-content case
+                    pass
+
             soup = BeautifulSoup(response.text, "html.parser")
 
             title = ""
@@ -85,6 +154,7 @@ def scrape_webpage(url, timeout=15):
                 "description": description,
                 "content": main_text,
                 "url": url,
+                "fallback_used": fallback_used,
             }
 
     except Timeout:

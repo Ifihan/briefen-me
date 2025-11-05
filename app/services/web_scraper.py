@@ -6,7 +6,6 @@ from typing import Optional, Dict
 from flask import current_app
 
 
-# Patterns indicating the page is a JS-only interstitial or placeholder
 _PLACEHOLDER_PATTERNS = [
     "enable javascript",
     "js-disabled",
@@ -66,7 +65,6 @@ def scrape_webpage(url: str, timeout: int = 15) -> Dict:
                     "error_type": "invalid_content",
                 }
 
-            # Helper to detect JS-only / JS-block interstitials that mention enabling JS
             def _looks_like_js_blocked(text: Optional[str]) -> bool:
                 if not text:
                     return False
@@ -77,10 +75,8 @@ def scrape_webpage(url: str, timeout: int = 15) -> Dict:
             host = parsed.netloc.lower() if parsed.netloc else ""
             fallback_used: Optional[str] = None
 
-            # If the page appears to be JS-only (common with Twitter/X) try configured fallbacks:
             if _looks_like_js_blocked(response.text) and ("twitter.com" in host or host.endswith("x.com")):
                 try:
-                    # Load fallback hosts from config (comma-separated) or default to ['nitter.net']
                     fallbacks = current_app.config.get("TWITTER_FALLBACKS", ["nitter.net"])
                     if isinstance(fallbacks, str):
                         fallbacks = [h.strip() for h in fallbacks.split(",") if h.strip()]
@@ -99,17 +95,13 @@ def scrape_webpage(url: str, timeout: int = 15) -> Dict:
                             fallback_used = fb
                             break
 
-                    # If no mirror returned usable content, try a text proxy if configured
                     if (not response or _looks_like_js_blocked(response.text)):
                         text_proxy = current_app.config.get("TEXT_PROXY_URL")
                         if text_proxy:
-                            # Ensure text_proxy ends with 'http://' so concatenation yields
-                            # e.g. 'https://r.jina.ai/http://'+ 'x.com/path'
                             tp = text_proxy.strip()
                             if not tp.endswith("http://") and not tp.endswith("https://"):
                                 tp = tp.rstrip("/") + "/http://"
 
-                            # Build proxy URL by appending netloc+path (no scheme)
                             proxy_url = tp + parsed.netloc + parsed.path
                             if parsed.query:
                                 proxy_url += f"?{parsed.query}"

@@ -36,12 +36,8 @@ class Config:
 
     AI_THINKING_MODE = os.getenv("AI_THINKING_MODE", "ai_generated")
 
-    # Twitter/X fallback configuration: try these no-JS mirrors first (in order)
-    # Examples: nitter.net, nitter.snopyta.org, etc.
     TWITTER_FALLBACKS = os.getenv("TWITTER_FALLBACKS", "nitter.net").split(",")
 
-    # Text proxy to try as a last resort. This service renders a remote URL as plain text/html.
-    # Keep as None to disable.
     TEXT_PROXY_URL = os.getenv("TEXT_PROXY_URL", "https://r.jina.ai/http://")
 
     # Caching

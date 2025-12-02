@@ -5,7 +5,8 @@
   "description": "AI-powered URL shortener - shorten any page with one click",
   "permissions": [
     "activeTab",
-    "contextMenus"
+    "contextMenus",
+    "storage"
   ],
   "host_permissions": [
     "http://localhost:5001/*"

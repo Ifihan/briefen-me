@@ -4,6 +4,7 @@ from app import db
 from app.models.url import URL
 from app.services.url_validator import validate_url
 from app.services.slug_generator import generate_slug_options
+from app.utils.auth_decorators import jwt_optional
 import qrcode
 from io import BytesIO
 
@@ -45,6 +46,7 @@ def generate_slugs():
 
 
 @bp.route("/create-short-url", methods=["POST"])
+@jwt_optional
 def create_short_url():
     """Create a shortened URL with the selected slug."""
     try:
@@ -71,7 +73,13 @@ def create_short_url():
         if URL.query.filter_by(slug=slug).first():
             return jsonify({"success": False, "error": "Slug already taken"}), 400
 
-        user_id = current_user.id if current_user.is_authenticated else None
+        # Support both JWT and session-based auth
+        user_id = None
+        if hasattr(request, 'current_user') and request.current_user:
+            user_id = request.current_user.id
+        elif current_user.is_authenticated:
+            user_id = current_user.id
+
         new_url = URL(original_url=normalized_url, slug=slug, user_id=user_id)
 
         db.session.add(new_url)

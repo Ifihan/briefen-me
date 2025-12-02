@@ -3,21 +3,45 @@ const API_BASE = 'http://localhost:5001/api';
 let currentUrl = '';
 let selectedSlug = '';
 let slugOptions = [];
+let authToken = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   currentUrl = tab.url;
 
-  startShorteningProcess();
+  // Check if user is already logged in
+  const storage = await chrome.storage.local.get(['authToken']);
+  authToken = storage.authToken;
+
+  if (authToken) {
+    // User is logged in, skip to shortening process
+    startShorteningProcess();
+  } else {
+    // Show login screen
+    showContainer('login');
+  }
 });
 
 // Event listeners
+document.getElementById('login-btn').addEventListener('click', handleLogin);
+document.getElementById('guest-btn').addEventListener('click', () => {
+  authToken = null;
+  startShorteningProcess();
+});
 document.getElementById('create-btn').addEventListener('click', createShortUrl);
 document.getElementById('copy-btn').addEventListener('click', copyToClipboard);
 document.getElementById('cancel-btn').addEventListener('click', () => window.close());
 document.getElementById('retry-btn').addEventListener('click', startShorteningProcess);
 document.getElementById('new-btn').addEventListener('click', startShorteningProcess);
+document.getElementById('dashboard-btn').addEventListener('click', openDashboard);
+
+// Handle Enter key in login form
+document.getElementById('password').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    handleLogin();
+  }
+});
 
 function showContainer(id) {
   document.querySelectorAll('.container').forEach(el => el.classList.remove('active'));
@@ -144,9 +168,16 @@ async function createShortUrl() {
   document.getElementById('status-text').textContent = 'Creating short URL...';
 
   try {
+    const headers = { 'Content-Type': 'application/json' };
+
+    // Add auth token if available
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
     const response = await fetch(`${API_BASE}/create-short-url`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         url: currentUrl,
         slug: selectedSlug
@@ -179,4 +210,57 @@ function copyToClipboard() {
       btn.classList.remove('copied');
     }, 2000);
   });
+}
+
+async function handleLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const errorDiv = document.getElementById('login-error');
+
+  errorDiv.style.display = 'none';
+
+  if (!email || !password) {
+    errorDiv.textContent = 'Please enter both email and password';
+    errorDiv.style.display = 'block';
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Store token
+      authToken = data.token;
+      await chrome.storage.local.set({ authToken: data.token, user: data.user });
+
+      // Start shortening process
+      startShorteningProcess();
+    } else {
+      errorDiv.textContent = data.error || 'Login failed';
+      errorDiv.style.display = 'block';
+    }
+  } catch (error) {
+    errorDiv.textContent = 'Failed to connect to server';
+    errorDiv.style.display = 'block';
+  }
+}
+
+async function openDashboard() {
+  if (authToken) {
+    // User is logged in - open dashboard with auto-login
+    chrome.tabs.create({
+      url: `http://localhost:5001/extension-auth?token=${authToken}`
+    });
+  } else {
+    // Not logged in - open regular login page
+    chrome.tabs.create({
+      url: 'http://localhost:5001/login'
+    });
+  }
 }

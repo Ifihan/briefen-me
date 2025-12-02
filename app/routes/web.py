@@ -5,6 +5,8 @@ from app.models.user import User
 from app.models.url import URL
 from app.services.email_service import send_password_reset_email
 from datetime import datetime
+import jwt
+import os
 
 bp = Blueprint('web', __name__)
 
@@ -144,6 +146,39 @@ def reset_password(token):
         return redirect(url_for('web.login'))
 
     return render_template('reset_password.html', token=token)
+
+
+@bp.route('/extension-auth')
+def extension_auth():
+    """Exchange JWT token for web session cookie (auto-login from extension)."""
+    token = request.args.get('token')
+
+    if not token:
+        flash('Invalid authentication', 'error')
+        return redirect(url_for('web.login'))
+
+    try:
+        payload = jwt.decode(
+            token,
+            os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production'),
+            algorithms=['HS256']
+        )
+        user = User.query.get(payload['user_id'])
+
+        if user:
+            login_user(user)
+            flash('Welcome back!', 'success')
+            return redirect(url_for('web.dashboard'))
+
+    except jwt.ExpiredSignatureError:
+        flash('Session expired. Please log in again.', 'error')
+        return redirect(url_for('web.login'))
+    except jwt.InvalidTokenError:
+        flash('Authentication failed', 'error')
+        return redirect(url_for('web.login'))
+
+    flash('Authentication failed', 'error')
+    return redirect(url_for('web.login'))
 
 
 @bp.route('/logout')

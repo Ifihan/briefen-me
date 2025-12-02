@@ -34,10 +34,11 @@ def create_app(config_class=Config):
         db.session.remove()
 
     # Register blueprints
-    from app.routes import web, api
+    from app.routes import web, api, auth
 
     app.register_blueprint(web.bp)
     app.register_blueprint(api.bp)
+    app.register_blueprint(auth.bp)
 
     # Create tables
     with app.app_context():

@@ -284,6 +284,43 @@
         opacity: 1;
       }
     }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--gray-900);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-600);
+    }
+
+    .btn-dashboard {
+      background: var(--accent-500);
+      color: white;
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .btn-dashboard:hover {
+      background: #7c3aed;
+    }
   </style>
 </head>
 <body>
@@ -293,6 +330,22 @@
   </div>
 
   <div class="content">
+    <div id="login" class="container">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="email" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="password" class="form-input">
+      </div>
+      <div id="login-error" class="error" style="display: none;"></div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" id="guest-btn">Continue as Guest</button>
+        <button type="button" class="btn btn-primary" id="login-btn">Login</button>
+      </div>
+    </div>
+
     <div id="loading" class="container">
       <div class="loading">
         <div class="spinner"></div>
@@ -325,6 +378,7 @@
       <div class="actions">
         <button type="button" class="btn btn-primary" id="new-btn">Shorten Another</button>
       </div>
+      <button type="button" class="btn btn-dashboard" id="dashboard-btn">Go to Dashboard</button>
     </div>
 
     <div id="error" class="container">

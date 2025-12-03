@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Briefen.me</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <div>
+        <h1>Briefen.me</h1>
+        <p>AI-Powered URL Shortener</p>
+      </div>
+      <button type="button" class="btn-logout hidden" id="logout-btn" title="Logout">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V3.33333C2 2.97971 2.14048 2.64057 2.39052 2.39052C2.64057 2.14048 2.97971 2 3.33333 2H6M10.6667 11.3333L14 8M14 8L10.6667 4.66667M14 8H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="login" class="container">
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input type="email" id="email" class="form-input" aria-label="Email">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input type="password" id="password" class="form-input" aria-label="Password">
+      </div>
+      <div id="login-error" class="error hidden"></div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" id="guest-btn">Continue as Guest</button>
+        <button type="button" class="btn btn-primary" id="login-btn">Login</button>
+      </div>
+    </div>
+
+    <div id="loading" class="container">
+      <div class="loading">
+        <div class="spinner"></div>
+        <div class="status" id="status-text">Generating slug options...</div>
+      </div>
+    </div>
+
+    <div id="slug-selection" class="container">
+      <span class="slug-options-label">Choose your preferred slug:</span>
+      <div class="slug-options" id="slug-options"></div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+        <button type="button" class="btn btn-primary" id="create-btn" disabled>Create Short URL</button>
+      </div>
+    </div>
+
+    <div id="result" class="container">
+      <div class="success-icon">✓</div>
+      <div class="result-box">
+        <label>Short URL</label>
+        <div class="url-display">
+          <div class="url-text" id="short-url"></div>
+          <button type="button" class="btn btn-secondary btn-copy" id="copy-btn">Copy</button>
+        </div>
+      </div>
+      <div class="result-box">
+        <label>Original URL</label>
+        <div class="url-text" id="original-url"></div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="new-btn">Shorten Another</button>
+      </div>
+      <button type="button" class="btn btn-dashboard" id="dashboard-btn">Go to Dashboard</button>
+    </div>
+
+    <div id="error" class="container">
+      <div class="error" id="error-message"></div>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="retry-btn">Try Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

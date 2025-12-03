@@ -23,3 +23,5 @@ instance/
 
 # MacOS
 .DS_Store
+
+chrome-extension.zip

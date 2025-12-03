@@ -1100,6 +1100,22 @@ button:disabled {
     height: 20px;
 }
 
+.footer-links {
+    margin: var(--space-6) 0;
+}
+
+.footer-link {
+    color: var(--gray-400);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
 .footer-copyright {
     color: var(--gray-400);
     font-size: 0.875rem;

@@ -221,6 +221,12 @@ def delete_url(url_id):
     return redirect(url_for('web.dashboard'))
 
 
+@bp.route('/privacy')
+def privacy():
+    """Privacy policy page."""
+    return render_template('privacy.html')
+
+
 @bp.route('/sitemap.xml')
 def sitemap():
     """Generate dynamic XML sitemap for SEO."""
@@ -229,6 +235,7 @@ def sitemap():
     # Static pages (public only)
     static_pages = [
         {'loc': url_for('web.index', _external=True), 'changefreq': 'daily', 'priority': '1.0'},
+        {'loc': url_for('web.privacy', _external=True), 'changefreq': 'monthly', 'priority': '0.5'},
     ]
     pages.extend(static_pages)
 

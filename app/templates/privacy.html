@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy - Briefen.me{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 0 auto; padding: 60px 24px;">
+    <div style="text-align: center; margin-bottom: 48px;">
+        <h1 style="font-size: 3rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">Privacy Policy</h1>
+        <p style="color: var(--text-secondary); font-size: 1rem;">
+            <strong>Last Updated:</strong> December 3, 2024
+        </p>
+    </div>
+
+    <div style="background: var(--surface); border-radius: 16px; padding: 48px; box-shadow: var(--shadow-lg); border: 1px solid var(--border);">
+
+        <!-- Introduction -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                1. Introduction
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                Welcome to Briefen.me ("we," "our," or "us"). We respect your privacy and are committed to protecting your personal data. This privacy policy explains how we collect, use, and safeguard your information when you use our URL shortening service, including our website and Chrome extension.
+            </p>
+        </section>
+
+        <!-- Information We Collect -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                2. Information We Collect
+            </h2>
+
+            <div style="margin-bottom: 32px;">
+                <h3 style="font-size: 1.375rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px;">
+                    2.1 Information You Provide
+                </h3>
+                <ul style="list-style: disc; padding-left: 28px; color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                    <li style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">Account Information:</strong> When you create an account, we collect your email address and password (securely hashed).</li>
+                    <li style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">URLs:</strong> We collect the URLs you choose to shorten through our service.</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 style="font-size: 1.375rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px;">
+                    2.2 Automatically Collected Information
+                </h3>
+                <ul style="list-style: disc; padding-left: 28px; color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                    <li style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">Usage Data:</strong> We collect click statistics on shortened URLs, including timestamps and basic analytics.</li>
+                    <li style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">Browser Extension Data:</strong> When using our Chrome extension, we temporarily access the URL of your active tab only when you initiate the shortening process.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- How We Use Your Information -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                3. How We Use Your Information
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem; margin-bottom: 16px;">
+                We use the collected information for:
+            </p>
+            <ul style="list-style: disc; padding-left: 28px; color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                <li style="margin-bottom: 12px;">Providing and maintaining our URL shortening service</li>
+                <li style="margin-bottom: 12px;">Authenticating users and managing accounts</li>
+                <li style="margin-bottom: 12px;">Generating AI-powered URL slugs</li>
+                <li style="margin-bottom: 12px;">Tracking click analytics for your shortened URLs</li>
+                <li style="margin-bottom: 12px;">Improving our services and user experience</li>
+                <li style="margin-bottom: 12px;">Sending important service-related notifications (e.g., password reset emails)</li>
+            </ul>
+        </section>
+
+        <!-- Chrome Extension Permissions -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                4. Chrome Extension Permissions
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem; margin-bottom: 16px;">
+                Our Chrome extension requests the following permissions:
+            </p>
+            <ul style="list-style: disc; padding-left: 28px; color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem; margin-bottom: 20px;">
+                <li style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">activeTab:</strong> Access the current tab's URL only when you click the extension icon to shorten it</li>
+                <li style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">contextMenus:</strong> Add a right-click menu option for quick URL shortening</li>
+                <li style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">storage:</strong> Store authentication tokens locally on your device for persistent login</li>
+                <li style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">host permissions:</strong> Communicate with our API server to generate slugs and create shortened links</li>
+            </ul>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem; background: var(--primary-50); padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary);">
+                <strong style="color: var(--primary-700);">Note:</strong> We do not access tabs, browse history, or any data except when you explicitly trigger the URL shortening feature.
+            </p>
+        </section>
+
+        <!-- Data Storage and Security -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                5. Data Storage and Security
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem; margin-bottom: 16px;">
+                We implement appropriate security measures to protect your personal information:
+            </p>
+            <ul style="list-style: disc; padding-left: 28px; color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                <li style="margin-bottom: 12px;">Passwords are hashed using industry-standard bcrypt encryption</li>
+                <li style="margin-bottom: 12px;">Authentication tokens are securely stored locally in your browser</li>
+                <li style="margin-bottom: 12px;">Data transmission is protected using HTTPS encryption</li>
+                <li style="margin-bottom: 12px;">Access to user data is restricted to authorized personnel only</li>
+            </ul>
+        </section>
+
+        <!-- Data Sharing and Third Parties -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                6. Data Sharing and Third Parties
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem; margin-bottom: 16px;">
+                We do not sell, trade, or rent your personal information to third parties. We may share data only in the following circumstances:
+            </p>
+            <ul style="list-style: disc; padding-left: 28px; color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                <li style="margin-bottom: 12px;">With your explicit consent</li>
+                <li style="margin-bottom: 12px;">To comply with legal obligations or respond to lawful requests</li>
+                <li style="margin-bottom: 12px;">To protect our rights, property, or safety, or that of our users</li>
+            </ul>
+        </section>
+
+        <!-- Guest Users -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                7. Guest Users
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                If you use our service as a guest (without creating an account), we only collect the URLs you shorten and basic usage statistics. Guest-created URLs are not associated with any user account.
+            </p>
+        </section>
+
+        <!-- Your Rights -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                8. Your Rights
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem; margin-bottom: 16px;">
+                You have the right to:
+            </p>
+            <ul style="list-style: disc; padding-left: 28px; color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem; margin-bottom: 20px;">
+                <li style="margin-bottom: 12px;">Access the personal data we hold about you</li>
+                <li style="margin-bottom: 12px;">Request correction of inaccurate data</li>
+                <li style="margin-bottom: 12px;">Request deletion of your account and associated data</li>
+                <li style="margin-bottom: 12px;">Export your data</li>
+                <li style="margin-bottom: 12px;">Opt out of receiving non-essential communications</li>
+            </ul>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                To exercise these rights, please contact us at the email address provided below.
+            </p>
+        </section>
+
+        <!-- Data Retention -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                9. Data Retention
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                We retain your personal data for as long as your account is active or as needed to provide services. You may delete your account at any time, which will remove your personal information from our active databases.
+            </p>
+        </section>
+
+        <!-- Children's Privacy -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                10. Children's Privacy
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                Our service is not directed to individuals under 13 years of age. We do not knowingly collect personal information from children under 13.
+            </p>
+        </section>
+
+        <!-- Changes to This Policy -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                11. Changes to This Policy
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                We may update this privacy policy from time to time. We will notify users of significant changes by posting the new policy on this page and updating the "Last Updated" date.
+            </p>
+        </section>
+
+        <!-- AI-Generated Content -->
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-100);">
+                12. AI-Generated Content
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem;">
+                Our service uses artificial intelligence to generate URL slug suggestions. The AI processes your URL content to create relevant, contextual slug options. This processing happens in real-time and the content is not stored beyond what's necessary to provide the service.
+            </p>
+        </section>
+
+        <!-- Contact Us -->
+        <section style="background: var(--primary-50); padding: 32px; border-radius: 12px; border: 2px solid var(--primary-200);">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary-700); margin-bottom: 20px;">
+                13. Contact Us
+            </h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.0625rem; margin-bottom: 16px;">
+                If you have questions or concerns about this privacy policy, please contact us at:
+            </p>
+            <p style="font-size: 1.125rem; margin-bottom: 0;">
+                <strong style="color: var(--text-primary);">Email:</strong>
+                <a href="mailto:victoriaolusheye@gmail.com" style="color: var(--primary); text-decoration: none; font-weight: 600; transition: color 0.2s ease;">
+                    victoriaolusheye@gmail.com
+                </a>
+            </p>
+        </section>
+
+    </div>
+</div>
+
+<style>
+    /* Hover effect for email link */
+    a[href^="mailto:"]:hover {
+        color: var(--primary-700) !important;
+        text-decoration: underline !important;
+    }
+</style>
+{% endblock %}

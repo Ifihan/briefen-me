@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   authToken = storage.authToken;
 
   if (authToken) {
-    // User is logged in, skip to shortening process
+    // User is logged in, show logout button and skip to shortening process
+    document.getElementById('logout-btn').classList.remove('hidden');
     startShorteningProcess();
   } else {
     // Show login screen
@@ -29,6 +30,7 @@ document.getElementById('guest-btn').addEventListener('click', () => {
   authToken = null;
   startShorteningProcess();
 });
+document.getElementById('logout-btn').addEventListener('click', handleLogout);
 document.getElementById('create-btn').addEventListener('click', createShortUrl);
 document.getElementById('copy-btn').addEventListener('click', copyToClipboard);
 document.getElementById('cancel-btn').addEventListener('click', () => window.close());
@@ -217,11 +219,11 @@ async function handleLogin() {
   const password = document.getElementById('password').value;
   const errorDiv = document.getElementById('login-error');
 
-  errorDiv.style.display = 'none';
+  errorDiv.classList.add('hidden');
 
   if (!email || !password) {
     errorDiv.textContent = 'Please enter both email and password';
-    errorDiv.style.display = 'block';
+    errorDiv.classList.remove('hidden');
     return;
   }
 
@@ -239,16 +241,35 @@ async function handleLogin() {
       authToken = data.token;
       await chrome.storage.local.set({ authToken: data.token, user: data.user });
 
+      // Show logout button
+      document.getElementById('logout-btn').classList.remove('hidden');
+
       // Start shortening process
       startShorteningProcess();
     } else {
       errorDiv.textContent = data.error || 'Login failed';
-      errorDiv.style.display = 'block';
+      errorDiv.classList.remove('hidden');
     }
   } catch (error) {
     errorDiv.textContent = 'Failed to connect to server';
-    errorDiv.style.display = 'block';
+    errorDiv.classList.remove('hidden');
   }
+}
+
+async function handleLogout() {
+  // Clear stored auth token
+  authToken = null;
+  await chrome.storage.local.remove(['authToken', 'user']);
+
+  // Hide logout button
+  document.getElementById('logout-btn').classList.add('hidden');
+
+  // Clear form inputs
+  document.getElementById('email').value = '';
+  document.getElementById('password').value = '';
+
+  // Show login screen
+  showContainer('login');
 }
 
 async function openDashboard() {

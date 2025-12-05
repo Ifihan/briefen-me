@@ -9,8 +9,8 @@
     "storage"
   ],
   "host_permissions": [
-    "http://localhost:5001/*",
-    "https://briefen.me/*"
+    "https://briefen.me/*",
+    "http://localhost:5001/*"
   ],
   "action": {
     "default_popup": "popup.html",

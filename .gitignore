@@ -24,4 +24,7 @@ instance/
 # MacOS
 .DS_Store
 
+# Chrome Extension Build
 chrome-extension.zip
+extension-build/
+briefen-me-extension-*.zip

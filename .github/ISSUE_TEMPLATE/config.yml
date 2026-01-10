@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security Vulnerability
+    url: mailto:victoriaolusheye@gmail.com
+    about: Please report security vulnerabilities via email (do not create a public issue)
+  - name: Code of Conduct
+    url: https://github.com/Ifihan/briefen-me/blob/main/CODE_OF_CONDUCT.md
+    about: Review our Code of Conduct

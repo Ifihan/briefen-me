@@ -200,9 +200,14 @@ def create():
 @bp.route('/dashboard')
 @login_required
 def dashboard():
-    """User dashboard showing their shortened URLs."""
-    urls = URL.query.filter_by(user_id=current_user.id).order_by(URL.created_at.desc()).all()
-    return render_template('dashboard.html', urls=urls)
+    """User dashboard showing their shortened URLs with pagination."""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    pagination = URL.query.filter_by(user_id=current_user.id).order_by(
+        URL.created_at.desc()
+    ).paginate(page=page, per_page=per_page, error_out=False)
+    urls = pagination.items
+    return render_template('dashboard.html', urls=urls, pagination=pagination)
 
 
 @bp.route('/delete/<int:url_id>', methods=['POST'])

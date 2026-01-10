@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     reset_token = db.Column(db.String(100), unique=True, nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
+    is_subadmin = db.Column(db.Boolean, default=False, nullable=False)
 
     urls = db.relationship(
         "URL", backref="owner", lazy="dynamic", cascade="all, delete-orphan"

@@ -4,7 +4,7 @@ from app import db
 from app.models.url import URL
 from app.services.url_validator import validate_url
 from app.services.slug_generator import generate_slug_options
-from app.utils.auth_decorators import jwt_optional
+from app.utils.auth_decorators import jwt_optional, subadmin_required
 import qrcode
 from io import BytesIO
 
@@ -235,3 +235,58 @@ def generate_qrcode(url_id):
         if img_io:
             img_io.close()
         return jsonify({"success": False, "error": f"An error occurred: {str(e)}"}), 500
+
+
+@bp.route("/edit-url/<int:url_id>", methods=["PUT"])
+@subadmin_required
+def edit_url(url_id):
+    """Edit the destination URL of an existing shortened URL. Sub-admin only."""
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"success": False, "error": "Invalid request data"}), 400
+
+        new_url = data.get("original_url")
+
+        if not new_url:
+            return jsonify({"success": False, "error": "New URL is required"}), 400
+
+        # Validate the new URL
+        is_valid, error_message, normalized_url = validate_url(new_url)
+        if not is_valid:
+            return jsonify({"success": False, "error": error_message}), 400
+
+        url_obj = URL.query.get_or_404(url_id)
+
+        # Check ownership - sub-admins can only edit their own links
+        if url_obj.user_id != current_user.id:
+            return (
+                jsonify(
+                    {"success": False, "error": "Unauthorized to edit this link"}
+                ),
+                403,
+            )
+
+        old_url = url_obj.original_url
+        url_obj.original_url = normalized_url
+        db.session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "old_url": old_url,
+                    "new_url": normalized_url,
+                    "url_id": url_id,
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        return (
+            jsonify({"success": False, "error": f"An error occurred: {str(e)}"}),
+            500,
+        )

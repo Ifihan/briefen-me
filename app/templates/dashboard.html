@@ -31,9 +31,26 @@
                             </div>
                             <span class="edit-hint">Only lowercase letters, numbers, and hyphens allowed</span>
                         </div>
-                        <div class="url-original">
-                            Original: {{ url.original_url }}
+                        <div class="url-original" id="url-display-{{ url.id }}">
+                            Original: <span id="url-text-{{ url.id }}">{{ url.original_url }}</span>
                         </div>
+                        {% if current_user.is_subadmin %}
+                        <div class="edit-url-section hidden" id="edit-url-section-{{ url.id }}">
+                            <label for="edit-url-input-{{ url.id }}">Edit Destination URL</label>
+                            <div class="edit-input-group">
+                                <input
+                                    type="url"
+                                    id="edit-url-input-{{ url.id }}"
+                                    value="{{ url.original_url }}"
+                                    placeholder="https://example.com/page"
+                                    class="edit-url-input"
+                                />
+                                <button type="button" class="btn-secondary" onclick="saveUrl({{ url.id }})">Save</button>
+                                <button type="button" class="btn-secondary" onclick="cancelUrlEdit({{ url.id }})">Cancel</button>
+                            </div>
+                            <span class="edit-hint">Enter a valid URL starting with http:// or https://</span>
+                        </div>
+                        {% endif %}
                         <div class="url-meta">
                             Created: {{ url.created_at.strftime('%Y-%m-%d %H:%M') }} | Clicks: {{ url.click_count }}
                         </div>
@@ -49,7 +66,10 @@
                             </svg>
                             QR Code
                         </button>
-                        <button type="button" id="edit-btn-{{ url.id }}" onclick="startEdit({{ url.id }}, '{{ url.slug }}')" aria-label="Edit slug {{ url.slug }}">Edit</button>
+                        <button type="button" id="edit-btn-{{ url.id }}" onclick="startEdit({{ url.id }}, '{{ url.slug }}')" aria-label="Edit slug {{ url.slug }}">Edit Slug</button>
+                        {% if current_user.is_subadmin %}
+                        <button type="button" id="edit-url-btn-{{ url.id }}" onclick="startUrlEdit({{ url.id }})" aria-label="Edit destination URL">Edit URL</button>
+                        {% endif %}
                         <form method="POST" action="{{ url_for('web.delete_url', url_id=url.id) }}" class="delete-form">
                             <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this link?')" aria-label="Delete URL {{ url.slug }}">Delete</button>
                         </form>
@@ -57,6 +77,26 @@
                 </div>
             {% endfor %}
         </div>
+
+        {% if pagination.pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('web.dashboard', page=pagination.prev_num) }}" class="pagination-btn">&laquo; Previous</a>
+            {% else %}
+            <span class="pagination-btn disabled">&laquo; Previous</span>
+            {% endif %}
+
+            <span class="pagination-info">
+                Page {{ pagination.page }} of {{ pagination.pages }}
+            </span>
+
+            {% if pagination.has_next %}
+            <a href="{{ url_for('web.dashboard', page=pagination.next_num) }}" class="pagination-btn">Next &raquo;</a>
+            {% else %}
+            <span class="pagination-btn disabled">Next &raquo;</span>
+            {% endif %}
+        </div>
+        {% endif %}
     {% else %}
         <div class="empty-state">
             <p>You haven't created any short links yet.</p>
@@ -187,6 +227,83 @@ function showFlashMessage(message, type) {
         flash.style.transition = 'opacity 0.3s ease';
         setTimeout(() => flash.remove(), 300);
     }, 3000);
+}
+
+function startUrlEdit(urlId) {
+    // Hide the URL display
+    document.getElementById(`url-display-${urlId}`).classList.add('hidden');
+    // Show the edit URL section
+    document.getElementById(`edit-url-section-${urlId}`).classList.remove('hidden');
+    // Focus on the input
+    const input = document.getElementById(`edit-url-input-${urlId}`);
+    input.focus();
+    input.select();
+}
+
+function cancelUrlEdit(urlId) {
+    // Show the URL display
+    document.getElementById(`url-display-${urlId}`).classList.remove('hidden');
+    // Hide the edit URL section
+    document.getElementById(`edit-url-section-${urlId}`).classList.add('hidden');
+    // Reset the input to original value
+    const originalUrl = document.getElementById(`url-text-${urlId}`).textContent;
+    document.getElementById(`edit-url-input-${urlId}`).value = originalUrl;
+}
+
+async function saveUrl(urlId) {
+    const input = document.getElementById(`edit-url-input-${urlId}`);
+    const newUrl = input.value.trim();
+    const currentUrl = document.getElementById(`url-text-${urlId}`).textContent;
+
+    if (!newUrl || newUrl === currentUrl) {
+        cancelUrlEdit(urlId);
+        return;
+    }
+
+    // Basic URL validation
+    if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+        alert('URL must start with http:// or https://');
+        input.focus();
+        return;
+    }
+
+    // Disable the input and buttons while saving
+    input.disabled = true;
+    const saveBtn = event.target;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    try {
+        const response = await fetch(`/api/edit-url/${urlId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ original_url: newUrl })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update the URL text
+            document.getElementById(`url-text-${urlId}`).textContent = data.new_url;
+            // Hide edit section and show display
+            cancelUrlEdit(urlId);
+            // Show success message
+            showFlashMessage('Destination URL updated successfully!', 'success');
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update URL'));
+            input.disabled = false;
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save';
+        }
+    } catch (error) {
+        console.error('Error editing URL:', error);
+        alert('Error editing URL: ' + error.message);
+        input.disabled = false;
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+    }
 }
 </script>
 {% endblock %}

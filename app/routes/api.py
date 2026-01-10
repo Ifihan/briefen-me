@@ -7,6 +7,9 @@ from app.services.slug_generator import generate_slug_options
 from app.utils.auth_decorators import jwt_optional, subadmin_required
 import qrcode
 from io import BytesIO
+import logging
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -100,7 +103,8 @@ def create_short_url():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": f"An error occurred: {str(e)}"}), 500
+        logger.exception("Error creating short URL")
+        return jsonify({"success": False, "error": "An internal error occurred while creating the short URL"}), 500
 
 
 @bp.route("/edit-slug/<int:url_id>", methods=["PUT"])
@@ -182,8 +186,9 @@ def edit_slug(url_id):
 
     except Exception as e:
         db.session.rollback()
+        logger.exception("Error editing slug")
         return (
-            jsonify({"success": False, "error": f"An error occurred: {str(e)}"}),
+            jsonify({"success": False, "error": "An internal error occurred while editing the slug"}),
             500,
         )
 
@@ -232,9 +237,10 @@ def generate_qrcode(url_id):
 
     except Exception as e:
         db.session.rollback()
+        logger.exception("Error generating QR code")
         if img_io:
             img_io.close()
-        return jsonify({"success": False, "error": f"An error occurred: {str(e)}"}), 500
+        return jsonify({"success": False, "error": "An internal error occurred while generating the QR code"}), 500
 
 
 @bp.route("/edit-url/<int:url_id>", methods=["PUT"])
@@ -286,7 +292,8 @@ def edit_url(url_id):
 
     except Exception as e:
         db.session.rollback()
+        logger.exception("Error editing URL")
         return (
-            jsonify({"success": False, "error": f"An error occurred: {str(e)}"}),
+            jsonify({"success": False, "error": "An internal error occurred while editing the URL"}),
             500,
         )

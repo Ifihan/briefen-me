@@ -75,7 +75,11 @@ def scrape_webpage(url: str, timeout: int = 15) -> Dict:
             host = parsed.netloc.lower() if parsed.netloc else ""
             fallback_used: Optional[str] = None
 
-            if _looks_like_js_blocked(response.text) and ("twitter.com" in host or host.endswith("x.com")):
+            # Properly check if the host is twitter.com or x.com (including subdomains)
+            is_twitter = host == "twitter.com" or host.endswith(".twitter.com")
+            is_x = host == "x.com" or host.endswith(".x.com")
+
+            if _looks_like_js_blocked(response.text) and (is_twitter or is_x):
                 try:
                     fallbacks = current_app.config.get("TWITTER_FALLBACKS", ["nitter.net"])
                     if isinstance(fallbacks, str):

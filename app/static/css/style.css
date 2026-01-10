@@ -1041,6 +1041,90 @@ button:disabled {
     font-size: 1.125rem;
 }
 
+/* Edit URL Section (Sub-admin feature) */
+.edit-url-section {
+    background: var(--accent-400);
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(139, 92, 246, 0.1));
+    border: 2px solid var(--accent-400);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin-top: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.edit-url-section label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--accent-600);
+    margin-bottom: var(--space-2);
+}
+
+.edit-url-input {
+    flex: 1;
+    min-width: 200px;
+    padding: var(--space-3) var(--space-4);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 0.9375rem;
+    transition: all var(--transition-fast);
+    background: var(--surface);
+}
+
+.edit-url-input:focus {
+    outline: none;
+    border-color: var(--accent-500);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+    padding: var(--space-4) 0;
+}
+
+.pagination-btn {
+    padding: var(--space-3) var(--space-5);
+    background: var(--primary);
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.pagination-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.pagination-btn.disabled {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.pagination-btn.disabled:hover {
+    background: var(--gray-300);
+    transform: none;
+    box-shadow: none;
+}
+
+.pagination-info {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
 /* Footer */
 .footer {
     background: var(--surface);
@@ -1405,6 +1489,27 @@ button:disabled {
 
     .empty-state p {
         font-size: 1rem;
+    }
+
+    /* Pagination */
+    .pagination {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .pagination-btn {
+        padding: var(--space-2) var(--space-4);
+        font-size: 0.875rem;
+    }
+
+    /* Edit URL section */
+    .edit-url-section {
+        padding: var(--space-3);
+    }
+
+    .edit-url-input {
+        min-width: 100%;
+        font-size: 0.875rem;
     }
 
     /* Footer */

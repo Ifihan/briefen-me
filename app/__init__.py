@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
 
 db = SQLAlchemy()
@@ -12,6 +13,9 @@ def create_app(config_class=Config):
     """Flask application factory."""
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    # Trust proxy headers (for HTTPS behind reverse proxy like Render/Heroku)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # Initialize extensions
     db.init_app(app)

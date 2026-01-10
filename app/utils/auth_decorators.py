@@ -1,5 +1,6 @@
 from functools import wraps
 from flask import request, jsonify
+from flask_login import current_user
 import jwt
 import os
 from app.models.user import User
@@ -26,6 +27,21 @@ def jwt_optional(f):
                     request.current_user = user
             except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
                 pass
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def subadmin_required(f):
+    """Decorator that requires the user to be authenticated and have sub-admin privileges."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return jsonify({"success": False, "error": "Authentication required"}), 401
+
+        if not current_user.is_subadmin:
+            return jsonify({"success": False, "error": "Sub-admin privileges required"}), 403
 
         return f(*args, **kwargs)
 

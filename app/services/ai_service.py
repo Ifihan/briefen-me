@@ -113,7 +113,7 @@ def generate_slugs_with_ai_thinking(title, description, content, num_options=5):
     """
     configure_gemini()
 
-    model = genai.GenerativeModel("gemini-2.0-flash-exp")
+    model = genai.GenerativeModel("gemini-2.5-flash")
 
     prompt = f"""
         You are a URL slug generator. I want you to think out loud about the webpage and then generate {num_options} short URL slugs.

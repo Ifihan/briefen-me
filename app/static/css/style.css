@@ -961,6 +961,8 @@ button:disabled {
 
 .url-info {
     flex: 1;
+    min-width: 0;
+    margin-right: var(--space-4);
 }
 
 .url-slug {
@@ -979,6 +981,9 @@ button:disabled {
     margin-bottom: var(--space-2);
     word-break: break-all;
     font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .url-meta {
@@ -990,6 +995,7 @@ button:disabled {
     display: flex;
     gap: var(--space-2);
     align-items: center;
+    flex-shrink: 0;
 }
 
 .url-actions button {
@@ -1043,9 +1049,8 @@ button:disabled {
 
 /* Edit URL Section (Sub-admin feature) */
 .edit-url-section {
-    background: var(--accent-400);
-    background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(139, 92, 246, 0.1));
-    border: 2px solid var(--accent-400);
+    background: var(--primary-50);
+    border: 2px solid var(--primary-200);
     border-radius: var(--radius-lg);
     padding: var(--space-4);
     margin-top: var(--space-3);
@@ -1056,7 +1061,7 @@ button:disabled {
     display: block;
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--accent-600);
+    color: var(--primary-700);
     margin-bottom: var(--space-2);
 }
 

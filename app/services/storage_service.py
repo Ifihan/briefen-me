@@ -2,24 +2,11 @@ import os
 import uuid
 import logging
 from flask import current_app
+from google.cloud import storage
 
 logger = logging.getLogger(__name__)
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
-
-
-def _get_storage_client():
-    """Create a GCS client, supporting explicit credentials file or ADC."""
-    from google.cloud import storage
-
-    creds_file = current_app.config.get("GCS_CREDENTIALS_FILE") or os.getenv(
-        "GOOGLE_APPLICATION_CREDENTIALS"
-    )
-    project_id = current_app.config.get("GCS_PROJECT_ID")
-
-    if creds_file:
-        return storage.Client.from_service_account_json(creds_file, project=project_id)
-    return storage.Client(project=project_id)
 
 
 def upload_avatar(file_data, filename, content_type):
@@ -39,12 +26,10 @@ def upload_avatar(file_data, filename, content_type):
             f"Image too large. Maximum size: {max_size // (1024 * 1024)}MB"
         )
 
-    from google.cloud import storage
-
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "jpg"
     blob_name = f"avatars/{uuid.uuid4().hex}.{ext}"
 
-    client = _get_storage_client()
+    client = storage.Client(project=current_app.config.get("GCS_PROJECT_ID"))
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
 
@@ -60,7 +45,7 @@ def get_avatar(blob_name):
         return None, None
 
     try:
-        client = _get_storage_client()
+        client = storage.Client(project=current_app.config.get("GCS_PROJECT_ID"))
         bucket = client.bucket(bucket_name)
         blob = bucket.blob(blob_name)
 
@@ -86,7 +71,7 @@ def delete_avatar(blob_name):
         return
 
     try:
-        client = _get_storage_client()
+        client = storage.Client(project=current_app.config.get("GCS_PROJECT_ID"))
         bucket = client.bucket(bucket_name)
         blob = bucket.blob(blob_name)
         blob.delete()

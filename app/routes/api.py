@@ -17,6 +17,33 @@ logger = logging.getLogger(__name__)
 bp = Blueprint("api", __name__, url_prefix="/api")
 
 
+def _is_social_media_url(url):
+    """Check if a URL is a social media platform."""
+    social_patterns = [
+        r'(twitter\.com|x\.com)',
+        r'linkedin\.com',
+        r'github\.com',
+        r'instagram\.com',
+        r'facebook\.com',
+        r'youtube\.com',
+        r'tiktok\.com',
+        r'discord\.(gg|com)',
+        r't\.me',
+        r'(wa\.me|whatsapp\.com)',
+        r'snapchat\.com',
+        r'reddit\.com',
+        r'pinterest\.com',
+        r'twitch\.tv',
+        r'medium\.com',
+    ]
+
+    url_lower = url.lower()
+    for pattern in social_patterns:
+        if re.search(pattern, url_lower):
+            return True
+    return False
+
+
 @bp.route("/generate-slugs", methods=["POST"])
 def generate_slugs():
     """
@@ -606,11 +633,15 @@ def create_bio_link():
         # Set position to end of list - use count for better performance
         link_count = BioLink.query.filter_by(bio_page_id=page.id).count()
 
+        # Auto-detect if this is a social media link
+        is_social = _is_social_media_url(url)
+
         link = BioLink(
             bio_page_id=page.id,
             title=title,
             url=url,
             position=link_count,
+            is_social=is_social,
         )
         db.session.add(link)
         db.session.commit()
@@ -623,6 +654,8 @@ def create_bio_link():
                 "url": link.url,
                 "position": link.position,
                 "is_active": link.is_active,
+                "is_social": link.is_social,
+                "social_platform": link.social_platform,
                 "click_count": link.click_count,
             },
         }), 201

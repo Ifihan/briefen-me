@@ -23,10 +23,15 @@ def index():
 def bio_page(username):
     """Public bio page."""
     page = BioPage.query.filter_by(username=username).first_or_404()
-    links = BioLink.query.filter_by(
+    all_links = BioLink.query.filter_by(
         bio_page_id=page.id, is_active=True
     ).order_by(BioLink.position).all()
-    return render_template('bio_page.html', page=page, links=links)
+
+    # Separate social and regular links
+    social_links = [link for link in all_links if link.is_social]
+    regular_links = [link for link in all_links if not link.is_social]
+
+    return render_template('bio_page.html', page=page, social_links=social_links, regular_links=regular_links)
 
 
 @bp.route('/<slug>')
@@ -229,11 +234,26 @@ def bio_editor():
     """Bio page editor."""
     page = BioPage.query.filter_by(user_id=current_user.id).first()
     links = []
+    used_urls = set()
+
     if page:
         links = BioLink.query.filter_by(
             bio_page_id=page.id
         ).order_by(BioLink.position).all()
-    user_urls = URL.query.filter_by(user_id=current_user.id).order_by(URL.created_at.desc()).all()
+
+        # Collect already-used URLs (from briefen short links)
+        for link in links:
+            # Extract slug from briefen short URLs
+            if request.host_url.rstrip('/') in link.url:
+                slug = link.url.replace(request.host_url, '').strip('/')
+                used_urls.add(slug)
+
+    # Get all user URLs
+    all_user_urls = URL.query.filter_by(user_id=current_user.id).order_by(URL.created_at.desc()).all()
+
+    # Filter out already-used URLs
+    user_urls = [url for url in all_user_urls if url.slug not in used_urls]
+
     return render_template('bio_editor.html', page=page, links=links, user_urls=user_urls)
 
 

@@ -1,5 +1,6 @@
 from datetime import datetime
 from app import db
+import re
 
 
 class BioPage(db.Model):
@@ -56,8 +57,40 @@ class BioLink(db.Model):
     url = db.Column(db.Text, nullable=False)
     position = db.Column(db.Integer, default=0, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    is_social = db.Column(db.Boolean, default=False, nullable=False)
     click_count = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    # Social media platform patterns
+    SOCIAL_PATTERNS = {
+        'twitter': r'(twitter\.com|x\.com)',
+        'linkedin': r'linkedin\.com',
+        'github': r'github\.com',
+        'instagram': r'instagram\.com',
+        'facebook': r'facebook\.com',
+        'youtube': r'youtube\.com',
+        'tiktok': r'tiktok\.com',
+        'discord': r'discord\.(gg|com)',
+        'telegram': r't\.me',
+        'whatsapp': r'(wa\.me|whatsapp\.com)',
+        'snapchat': r'snapchat\.com',
+        'reddit': r'reddit\.com',
+        'pinterest': r'pinterest\.com',
+        'twitch': r'twitch\.tv',
+        'medium': r'medium\.com',
+    }
+
+    @property
+    def social_platform(self):
+        """Detect which social media platform this link belongs to."""
+        if not self.is_social:
+            return None
+
+        url_lower = self.url.lower()
+        for platform, pattern in self.SOCIAL_PATTERNS.items():
+            if re.search(pattern, url_lower):
+                return platform
+        return 'other'
 
     def __repr__(self):
         return f"<BioLink {self.title} -> {self.url[:50]}>"

@@ -2,11 +2,14 @@ from flask import Blueprint, request, jsonify, Response, stream_with_context, se
 from flask_login import current_user, login_required
 from app import db
 from app.models.url import URL
+from app.models.bio import BioPage, BioLink
 from app.services.url_validator import validate_url
 from app.services.slug_generator import generate_slug_options
+from app.services.storage_service import upload_avatar, delete_avatar, get_avatar
 from app.utils.auth_decorators import jwt_optional, subadmin_required
 import qrcode
 from io import BytesIO
+import re
 import logging
 
 logger = logging.getLogger(__name__)
@@ -336,3 +339,427 @@ def edit_url(url_id):
             jsonify({"success": False, "error": "An internal error occurred while editing the URL"}),
             500,
         )
+
+
+# --- Bio Page API Endpoints ---
+
+
+def _get_bio_user():
+    """Get authenticated user from JWT or session. Returns user or None."""
+    if hasattr(request, 'current_user') and request.current_user:
+        return request.current_user
+    if current_user.is_authenticated:
+        return current_user
+    return None
+
+
+USERNAME_RE = re.compile(r"^[a-z0-9_-]{3,30}$")
+VALID_THEMES = {"default", "dark", "minimal", "colorful"}
+
+
+@bp.route("/bio", methods=["GET"])
+@jwt_optional
+def get_bio():
+    """Get current user's bio page and links."""
+    user = _get_bio_user()
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    page = BioPage.query.filter_by(user_id=user.id).first()
+    if not page:
+        return jsonify({"success": True, "bio_page": None}), 200
+
+    links = BioLink.query.filter_by(
+        bio_page_id=page.id
+    ).order_by(BioLink.position).all()
+
+    return jsonify({
+        "success": True,
+        "bio_page": {
+            "id": page.id,
+            "username": page.username,
+            "display_name": page.display_name,
+            "bio": page.bio,
+            "avatar_url": page.avatar_url,
+            "theme": page.theme,
+            "links": [
+                {
+                    "id": link.id,
+                    "title": link.title,
+                    "url": link.url,
+                    "position": link.position,
+                    "is_active": link.is_active,
+                    "click_count": link.click_count,
+                }
+                for link in links
+            ],
+        },
+    }), 200
+
+
+@bp.route("/bio", methods=["POST"])
+@jwt_optional
+def create_bio():
+    """Create a new bio page."""
+    user = _get_bio_user()
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    existing = BioPage.query.filter_by(user_id=user.id).first()
+    if existing:
+        return jsonify({"success": False, "error": "Bio page already exists. Use PUT to update."}), 400
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "Invalid request data"}), 400
+
+    username = data.get("username", "").strip().lower()
+    if not username or not USERNAME_RE.match(username):
+        return jsonify({
+            "success": False,
+            "error": "Username must be 3-30 characters: lowercase letters, numbers, underscores, hyphens",
+        }), 400
+
+    if BioPage.query.filter_by(username=username).first():
+        return jsonify({"success": False, "error": "Username already taken"}), 400
+
+    display_name = data.get("display_name", "").strip()[:100] or None
+    bio = data.get("bio", "").strip()[:500] or None
+    theme = data.get("theme", "default")
+    if theme not in VALID_THEMES:
+        theme = "default"
+
+    try:
+        page = BioPage(
+            user_id=user.id,
+            username=username,
+            display_name=display_name,
+            bio=bio,
+            theme=theme,
+        )
+        db.session.add(page)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "bio_page": {
+                "id": page.id,
+                "username": page.username,
+                "display_name": page.display_name,
+                "bio": page.bio,
+                "avatar_url": page.avatar_url,
+                "theme": page.theme,
+                "links": [],
+            },
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Error creating bio page")
+        return jsonify({"success": False, "error": "Failed to create bio page"}), 500
+
+
+@bp.route("/bio", methods=["PUT"])
+@jwt_optional
+def update_bio():
+    """Update bio page settings."""
+    user = _get_bio_user()
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    page = BioPage.query.filter_by(user_id=user.id).first()
+    if not page:
+        return jsonify({"success": False, "error": "Bio page not found"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "Invalid request data"}), 400
+
+    try:
+        if "username" in data:
+            new_username = data["username"].strip().lower()
+            if not USERNAME_RE.match(new_username):
+                return jsonify({
+                    "success": False,
+                    "error": "Username must be 3-30 characters: lowercase letters, numbers, underscores, hyphens",
+                }), 400
+            existing = BioPage.query.filter_by(username=new_username).first()
+            if existing and existing.id != page.id:
+                return jsonify({"success": False, "error": "Username already taken"}), 400
+            page.username = new_username
+
+        if "display_name" in data:
+            page.display_name = data["display_name"].strip()[:100] or None
+
+        if "bio" in data:
+            page.bio = data["bio"].strip()[:500] or None
+
+        if "theme" in data and data["theme"] in VALID_THEMES:
+            page.theme = data["theme"]
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "bio_page": {
+                "id": page.id,
+                "username": page.username,
+                "display_name": page.display_name,
+                "bio": page.bio,
+                "avatar_url": page.avatar_url,
+                "theme": page.theme,
+            },
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Error updating bio page")
+        return jsonify({"success": False, "error": "Failed to update bio page"}), 500
+
+
+@bp.route("/bio/avatar", methods=["POST"])
+@jwt_optional
+def upload_bio_avatar():
+    """Upload avatar image for bio page."""
+    user = _get_bio_user()
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    page = BioPage.query.filter_by(user_id=user.id).first()
+    if not page:
+        return jsonify({"success": False, "error": "Bio page not found. Create one first."}), 404
+
+    if "avatar" not in request.files:
+        return jsonify({"success": False, "error": "No file uploaded"}), 400
+
+    file = request.files["avatar"]
+    if not file.filename:
+        return jsonify({"success": False, "error": "No file selected"}), 400
+
+    try:
+        file_data = file.read()
+        old_avatar = page.avatar_url
+
+        blob_name = upload_avatar(file_data, file.filename, file.content_type)
+
+        # Store blob name in database
+        page.avatar_url = blob_name
+        db.session.commit()
+
+        # Delete old avatar after successful update
+        if old_avatar:
+            delete_avatar(old_avatar)
+
+        # Return URL path for the avatar endpoint
+        avatar_url = f"/api/avatar/{blob_name}"
+
+        return jsonify({
+            "success": True,
+            "avatar_url": avatar_url,
+        }), 200
+
+    except (ValueError, RuntimeError) as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Error uploading avatar")
+        return jsonify({"success": False, "error": f"Upload failed: {e}"}), 500
+
+
+@bp.route("/avatar/<path:blob_name>", methods=["GET"])
+def serve_avatar(blob_name):
+    """Serve avatar image from Google Cloud Storage."""
+    file_data, content_type = get_avatar(blob_name)
+
+    if not file_data:
+        return jsonify({"error": "Avatar not found"}), 404
+
+    return Response(file_data, mimetype=content_type)
+
+
+@bp.route("/bio/links", methods=["POST"])
+@jwt_optional
+def create_bio_link():
+    """Add a new link to bio page."""
+    user = _get_bio_user()
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    page = BioPage.query.filter_by(user_id=user.id).first()
+    if not page:
+        return jsonify({"success": False, "error": "Bio page not found"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "Invalid request data"}), 400
+
+    title = data.get("title", "").strip()
+    url = data.get("url", "").strip()
+
+    if not title or not url:
+        return jsonify({"success": False, "error": "Title and URL are required"}), 400
+
+    if len(title) > 100:
+        return jsonify({"success": False, "error": "Title must be 100 characters or less"}), 400
+
+    try:
+        # Set position to end of list - use count for better performance
+        link_count = BioLink.query.filter_by(bio_page_id=page.id).count()
+
+        link = BioLink(
+            bio_page_id=page.id,
+            title=title,
+            url=url,
+            position=link_count,
+        )
+        db.session.add(link)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "link": {
+                "id": link.id,
+                "title": link.title,
+                "url": link.url,
+                "position": link.position,
+                "is_active": link.is_active,
+                "click_count": link.click_count,
+            },
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Error creating bio link")
+        return jsonify({"success": False, "error": "Failed to create link"}), 500
+
+
+@bp.route("/bio/links/<int:link_id>", methods=["PUT"])
+@jwt_optional
+def update_bio_link(link_id):
+    """Update a bio link."""
+    user = _get_bio_user()
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    page = BioPage.query.filter_by(user_id=user.id).first()
+    if not page:
+        return jsonify({"success": False, "error": "Not found"}), 404
+
+    link = BioLink.query.filter_by(id=link_id, bio_page_id=page.id).first()
+    if not link:
+        return jsonify({"success": False, "error": "Link not found"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "Invalid request data"}), 400
+
+    try:
+        if "title" in data:
+            title = data["title"].strip()
+            if not title:
+                return jsonify({"success": False, "error": "Title cannot be empty"}), 400
+            link.title = title[:100]
+
+        if "url" in data:
+            url = data["url"].strip()
+            if not url:
+                return jsonify({"success": False, "error": "URL cannot be empty"}), 400
+            link.url = url
+
+        if "is_active" in data:
+            link.is_active = bool(data["is_active"])
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "link": {
+                "id": link.id,
+                "title": link.title,
+                "url": link.url,
+                "position": link.position,
+                "is_active": link.is_active,
+                "click_count": link.click_count,
+            },
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Error updating bio link")
+        return jsonify({"success": False, "error": "Failed to update link"}), 500
+
+
+@bp.route("/bio/links/<int:link_id>", methods=["DELETE"])
+@jwt_optional
+def delete_bio_link(link_id):
+    """Delete a bio link."""
+    user = _get_bio_user()
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    page = BioPage.query.filter_by(user_id=user.id).first()
+    if not page:
+        return jsonify({"success": False, "error": "Not found"}), 404
+
+    link = BioLink.query.filter_by(id=link_id, bio_page_id=page.id).first()
+    if not link:
+        return jsonify({"success": False, "error": "Link not found"}), 404
+
+    try:
+        db.session.delete(link)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Error deleting bio link")
+        return jsonify({"success": False, "error": "Failed to delete link"}), 500
+
+
+@bp.route("/bio/links/reorder", methods=["PUT"])
+@jwt_optional
+def reorder_bio_links():
+    """Reorder bio links. Expects JSON: {"order": [{"id": 1, "position": 0}, ...]}"""
+    user = _get_bio_user()
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    page = BioPage.query.filter_by(user_id=user.id).first()
+    if not page:
+        return jsonify({"success": False, "error": "Not found"}), 404
+
+    data = request.get_json()
+    if not data or "order" not in data:
+        return jsonify({"success": False, "error": "Order data required"}), 400
+
+    try:
+        for item in data["order"]:
+            link = BioLink.query.filter_by(
+                id=item["id"], bio_page_id=page.id
+            ).first()
+            if link:
+                link.position = item["position"]
+
+        db.session.commit()
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Error reordering bio links")
+        return jsonify({"success": False, "error": "Failed to reorder links"}), 500
+
+
+@bp.route("/bio/links/<int:link_id>/click", methods=["POST"])
+def track_bio_link_click(link_id):
+    """Track a click on a bio link. Public endpoint, no auth required."""
+    link = BioLink.query.get(link_id)
+    if not link:
+        return jsonify({"success": False}), 404
+
+    try:
+        link.click_count += 1
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({"success": False}), 500

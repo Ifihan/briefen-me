@@ -1,0 +1,618 @@
+{% extends "base.html" %}
+
+{% block title %}Bio Page Editor - Briefen{% endblock %}
+
+{% block content %}
+<div class="container bio-editor">
+    <div class="bio-editor-header">
+        <h2>Link-in-Bio Page</h2>
+        {% if page %}
+            <a href="{{ url_for('web.bio_page', username=page.username) }}" class="bio-preview-link" target="_blank">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                View Page
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- Profile Section -->
+    <div class="bio-section">
+        <h3>Profile</h3>
+
+        <div class="bio-avatar-section">
+            <div class="bio-avatar-preview" id="avatar-preview">
+                {% if page and page.avatar_display_url %}
+                    <img src="{{ page.avatar_display_url }}" alt="Avatar" id="avatar-img">
+                {% else %}
+                    <div class="bio-avatar-placeholder-editor" id="avatar-placeholder">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="bio-avatar-upload-area">
+                <label for="avatar-input" class="bio-upload-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Upload Photo
+                </label>
+                <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+                <span class="bio-upload-hint">JPEG, PNG, GIF, or WebP. Max 2MB.</span>
+            </div>
+        </div>
+
+        <div class="bio-form-group">
+            <label for="bio-username">Username</label>
+            <div class="bio-username-input-group">
+                <span class="bio-username-prefix">@</span>
+                <input type="text" id="bio-username"
+                       value="{{ page.username if page else '' }}"
+                       placeholder="yourname"
+                       pattern="[a-z0-9_-]{3,30}"
+                       maxlength="30"
+                       {% if not page %}autofocus{% endif %}>
+            </div>
+            <span class="bio-form-hint">3-30 characters: lowercase letters, numbers, underscores, hyphens</span>
+        </div>
+
+        <div class="bio-form-group">
+            <label for="bio-display-name">Display Name</label>
+            <input type="text" id="bio-display-name"
+                   value="{{ page.display_name if page and page.display_name else '' }}"
+                   placeholder="Your Name"
+                   maxlength="100">
+        </div>
+
+        <div class="bio-form-group">
+            <label for="bio-text">Bio</label>
+            <textarea id="bio-text" rows="3" placeholder="Tell people about yourself..." maxlength="500">{{ page.bio if page and page.bio else '' }}</textarea>
+            <span class="bio-form-hint"><span id="bio-char-count">{{ (page.bio|length) if page and page.bio else 0 }}</span>/500</span>
+        </div>
+
+        {% if not page %}
+            <button type="button" class="btn-primary" id="create-bio-btn" onclick="createBioPage()">Create Bio Page</button>
+        {% else %}
+            <button type="button" class="btn-primary" id="save-profile-btn" onclick="saveProfile()">Save Profile</button>
+        {% endif %}
+    </div>
+
+    {% if page %}
+    <!-- Theme Section -->
+    <div class="bio-section">
+        <h3>Theme</h3>
+        <div class="bio-theme-picker">
+            <label class="bio-theme-option {{ 'active' if page.theme == 'default' }}">
+                <input type="radio" name="theme" value="default" {{ 'checked' if page.theme == 'default' }} onchange="saveTheme(this.value)">
+                <div class="bio-theme-preview theme-preview-default">
+                    <div class="tp-circle"></div>
+                    <div class="tp-line"></div>
+                    <div class="tp-line tp-short"></div>
+                </div>
+                <span>Default</span>
+            </label>
+            <label class="bio-theme-option {{ 'active' if page.theme == 'dark' }}">
+                <input type="radio" name="theme" value="dark" {{ 'checked' if page.theme == 'dark' }} onchange="saveTheme(this.value)">
+                <div class="bio-theme-preview theme-preview-dark">
+                    <div class="tp-circle"></div>
+                    <div class="tp-line"></div>
+                    <div class="tp-line tp-short"></div>
+                </div>
+                <span>Dark</span>
+            </label>
+            <label class="bio-theme-option {{ 'active' if page.theme == 'minimal' }}">
+                <input type="radio" name="theme" value="minimal" {{ 'checked' if page.theme == 'minimal' }} onchange="saveTheme(this.value)">
+                <div class="bio-theme-preview theme-preview-minimal">
+                    <div class="tp-circle"></div>
+                    <div class="tp-line"></div>
+                    <div class="tp-line tp-short"></div>
+                </div>
+                <span>Minimal</span>
+            </label>
+            <label class="bio-theme-option {{ 'active' if page.theme == 'colorful' }}">
+                <input type="radio" name="theme" value="colorful" {{ 'checked' if page.theme == 'colorful' }} onchange="saveTheme(this.value)">
+                <div class="bio-theme-preview theme-preview-colorful">
+                    <div class="tp-circle"></div>
+                    <div class="tp-line"></div>
+                    <div class="tp-line tp-short"></div>
+                </div>
+                <span>Colorful</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Links Section -->
+    <div class="bio-section">
+        <div class="bio-links-header">
+            <h3>Links</h3>
+            <button type="button" class="btn-primary-small" onclick="showAddLinkForm()">+ Add Link</button>
+        </div>
+
+        <div class="bio-add-link-form hidden" id="add-link-form">
+            <div class="bio-add-tabs">
+                <button type="button" class="bio-tab active" data-tab="briefen-links" onclick="switchTab('briefen-links')">Your Briefen Links</button>
+                <button type="button" class="bio-tab" data-tab="social-links" onclick="switchTab('social-links')">Social Link</button>
+            </div>
+
+            <!-- Tab 1: Pick from shortened URLs -->
+            <div class="bio-tab-content active" id="tab-briefen-links">
+                <div class="bio-form-group">
+                    <label for="new-link-select">Select a shortened link</label>
+                    <select id="new-link-select">
+                        <option value="">-- Choose a link --</option>
+                        {% for url in user_urls %}
+                        <option value="{{ request.host_url }}{{ url.slug }}" data-slug="{{ url.slug }}" data-original="{{ url.original_url }}">{{ url.slug }} &rarr; {{ url.original_url[:60] }}{% if url.original_url|length > 60 %}...{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="bio-form-group">
+                    <label for="new-link-title-briefen">Display Title</label>
+                    <input type="text" id="new-link-title-briefen" placeholder="e.g. My Portfolio" maxlength="100">
+                </div>
+                <div class="bio-add-link-actions">
+                    <button type="button" class="btn-primary-small" onclick="addBriefenLink()">Add</button>
+                    <button type="button" class="btn-secondary" onclick="hideAddLinkForm()">Cancel</button>
+                </div>
+            </div>
+
+            <!-- Tab 2: Social link (manual URL) -->
+            <div class="bio-tab-content" id="tab-social-links">
+                <div class="bio-form-group">
+                    <label for="new-social-title">Title</label>
+                    <input type="text" id="new-social-title" placeholder="e.g. Twitter, GitHub, LinkedIn" maxlength="100">
+                </div>
+                <div class="bio-form-group">
+                    <label for="new-social-url">URL</label>
+                    <input type="url" id="new-social-url" placeholder="https://twitter.com/username">
+                </div>
+                <div class="bio-add-link-actions">
+                    <button type="button" class="btn-primary-small" onclick="addSocialLink()">Add</button>
+                    <button type="button" class="btn-secondary" onclick="hideAddLinkForm()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bio-links-list" id="bio-links-list">
+            {% for link in links %}
+                <div class="bio-link-item" data-id="{{ link.id }}">
+                    <div class="bio-link-drag-handle" title="Drag to reorder">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <line x1="8" y1="6" x2="16" y2="6"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                            <line x1="8" y1="18" x2="16" y2="18"/>
+                        </svg>
+                    </div>
+                    <div class="bio-link-content">
+                        <div class="bio-link-title-display">{{ link.title }}</div>
+                        <div class="bio-link-url-display">{{ link.url }}</div>
+                    </div>
+                    <div class="bio-link-actions">
+                        <label class="bio-link-toggle" title="{{ 'Active' if link.is_active else 'Inactive' }}">
+                            <input type="checkbox" {{ 'checked' if link.is_active }} onchange="toggleLink({{ link.id }}, this.checked)">
+                            <span class="bio-toggle-slider"></span>
+                        </label>
+                        <button type="button" class="bio-link-edit-btn" onclick="editLink({{ link.id }}, this)" title="Edit">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="bio-link-delete-btn" onclick="deleteLink({{ link.id }})" title="Delete">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if not links %}
+            <div class="bio-empty-links" id="bio-empty-links">
+                <p>No links yet. Add your first link above.</p>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if page %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+{% endif %}
+<script>
+const BIO_PAGE_EXISTS = {{ 'true' if page else 'false' }};
+
+function showFlash(message, type) {
+    const flash = document.createElement('div');
+    flash.className = 'flash flash-' + type;
+    flash.textContent = message;
+    flash.style.position = 'fixed';
+    flash.style.top = '20px';
+    flash.style.right = '20px';
+    flash.style.zIndex = '1000';
+    flash.style.maxWidth = '400px';
+    document.body.appendChild(flash);
+    setTimeout(function() {
+        flash.style.opacity = '0';
+        flash.style.transition = 'opacity 0.3s ease';
+        setTimeout(function() { flash.remove(); }, 300);
+    }, 3000);
+}
+
+// Avatar upload
+document.getElementById('avatar-input').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+        showFlash('Image must be under 2MB', 'error');
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('avatar', file);
+
+    fetch('/api/bio/avatar', {
+        method: 'POST',
+        body: formData,
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            var preview = document.getElementById('avatar-preview');
+            var placeholder = document.getElementById('avatar-placeholder');
+            var img = document.getElementById('avatar-img');
+
+            if (img) {
+                img.src = data.avatar_url;
+            } else {
+                if (placeholder) placeholder.remove();
+                var newImg = document.createElement('img');
+                newImg.src = data.avatar_url;
+                newImg.alt = 'Avatar';
+                newImg.id = 'avatar-img';
+                preview.appendChild(newImg);
+            }
+            showFlash('Avatar uploaded!', 'success');
+        } else {
+            showFlash(data.error || 'Upload failed', 'error');
+        }
+    }).catch(function() {
+        showFlash('Upload failed', 'error');
+    });
+});
+
+// Bio character count
+document.getElementById('bio-text').addEventListener('input', function() {
+    document.getElementById('bio-char-count').textContent = this.value.length;
+});
+
+// Create bio page
+function createBioPage() {
+    var username = document.getElementById('bio-username').value.trim().toLowerCase();
+    var displayName = document.getElementById('bio-display-name').value.trim();
+    var bio = document.getElementById('bio-text').value.trim();
+
+    if (!username) {
+        showFlash('Username is required', 'error');
+        return;
+    }
+
+    var btn = document.getElementById('create-bio-btn');
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+
+    fetch('/api/bio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username, display_name: displayName, bio: bio }),
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            showFlash('Bio page created!', 'success');
+            setTimeout(function() { window.location.reload(); }, 500);
+        } else {
+            showFlash(data.error || 'Failed to create', 'error');
+            btn.disabled = false;
+            btn.textContent = 'Create Bio Page';
+        }
+    }).catch(function() {
+        showFlash('Failed to create bio page', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Create Bio Page';
+    });
+}
+
+// Save profile
+function saveProfile() {
+    var username = document.getElementById('bio-username').value.trim().toLowerCase();
+    var displayName = document.getElementById('bio-display-name').value.trim();
+    var bio = document.getElementById('bio-text').value.trim();
+
+    var btn = document.getElementById('save-profile-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    fetch('/api/bio', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username, display_name: displayName, bio: bio }),
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            showFlash('Profile saved!', 'success');
+        } else {
+            showFlash(data.error || 'Failed to save', 'error');
+        }
+        btn.disabled = false;
+        btn.textContent = 'Save Profile';
+    }).catch(function() {
+        showFlash('Failed to save profile', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Save Profile';
+    });
+}
+
+// Save theme
+function saveTheme(theme) {
+    document.querySelectorAll('.bio-theme-option').forEach(function(opt) {
+        opt.classList.remove('active');
+    });
+    document.querySelector('input[name="theme"][value="' + theme + '"]').closest('.bio-theme-option').classList.add('active');
+
+    fetch('/api/bio', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: theme }),
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            showFlash('Theme updated!', 'success');
+        } else {
+            showFlash(data.error || 'Failed to update theme', 'error');
+        }
+    });
+}
+
+// Tab switching
+function switchTab(tabId) {
+    document.querySelectorAll('.bio-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.bio-tab-content').forEach(function(c) { c.classList.remove('active'); });
+    document.querySelector('[data-tab="' + tabId + '"]').classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+// Add link form
+function showAddLinkForm() {
+    document.getElementById('add-link-form').classList.remove('hidden');
+    switchTab('briefen-links');
+}
+
+function hideAddLinkForm() {
+    document.getElementById('add-link-form').classList.add('hidden');
+    document.getElementById('new-link-select').value = '';
+    document.getElementById('new-link-title-briefen').value = '';
+    document.getElementById('new-social-title').value = '';
+    document.getElementById('new-social-url').value = '';
+}
+
+function addBriefenLink() {
+    var select = document.getElementById('new-link-select');
+    var url = select.value;
+    var title = document.getElementById('new-link-title-briefen').value.trim();
+
+    if (!url) {
+        showFlash('Please select a link', 'error');
+        return;
+    }
+    if (!title) {
+        // Auto-fill title from slug
+        var opt = select.options[select.selectedIndex];
+        title = opt.getAttribute('data-slug');
+    }
+
+    doAddLink(title, url);
+}
+
+function addSocialLink() {
+    var title = document.getElementById('new-social-title').value.trim();
+    var url = document.getElementById('new-social-url').value.trim();
+
+    if (!title || !url) {
+        showFlash('Title and URL are required', 'error');
+        return;
+    }
+
+    doAddLink(title, url);
+}
+
+function doAddLink(title, url) {
+    fetch('/api/bio/links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, url: url }),
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            hideAddLinkForm();
+            var emptyMsg = document.getElementById('bio-empty-links');
+            if (emptyMsg) emptyMsg.remove();
+            appendLinkItem(data.link);
+            showFlash('Link added!', 'success');
+        } else {
+            showFlash(data.error || 'Failed to add link', 'error');
+        }
+    }).catch(function() {
+        showFlash('Failed to add link', 'error');
+    });
+}
+
+function appendLinkItem(link) {
+    var list = document.getElementById('bio-links-list');
+    var item = document.createElement('div');
+    item.className = 'bio-link-item';
+    item.setAttribute('data-id', link.id);
+    item.innerHTML =
+        '<div class="bio-link-drag-handle" title="Drag to reorder">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+                '<line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/>' +
+            '</svg>' +
+        '</div>' +
+        '<div class="bio-link-content">' +
+            '<div class="bio-link-title-display">' + escapeHtml(link.title) + '</div>' +
+            '<div class="bio-link-url-display">' + escapeHtml(link.url) + '</div>' +
+        '</div>' +
+        '<div class="bio-link-actions">' +
+            '<label class="bio-link-toggle" title="Active">' +
+                '<input type="checkbox" checked onchange="toggleLink(' + link.id + ', this.checked)">' +
+                '<span class="bio-toggle-slider"></span>' +
+            '</label>' +
+            '<button type="button" class="bio-link-edit-btn" onclick="editLink(' + link.id + ', this)" title="Edit">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>' +
+                    '<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>' +
+                '</svg>' +
+            '</button>' +
+            '<button type="button" class="bio-link-delete-btn" onclick="deleteLink(' + link.id + ')" title="Delete">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<polyline points="3 6 5 6 21 6"/>' +
+                    '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' +
+                '</svg>' +
+            '</button>' +
+        '</div>';
+    list.appendChild(item);
+}
+
+function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Toggle link active
+function toggleLink(linkId, isActive) {
+    fetch('/api/bio/links/' + linkId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: isActive }),
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (!data.success) {
+            showFlash(data.error || 'Failed to toggle link', 'error');
+        }
+    });
+}
+
+// Edit link inline
+function editLink(linkId, btn) {
+    var item = btn.closest('.bio-link-item');
+    var content = item.querySelector('.bio-link-content');
+    var titleEl = content.querySelector('.bio-link-title-display');
+    var urlEl = content.querySelector('.bio-link-url-display');
+
+    var currentTitle = titleEl.textContent;
+    var currentUrl = urlEl.textContent;
+
+    content.innerHTML =
+        '<input type="text" class="bio-edit-inline-input" value="' + escapeAttr(currentTitle) + '" id="edit-title-' + linkId + '" placeholder="Title">' +
+        '<input type="url" class="bio-edit-inline-input" value="' + escapeAttr(currentUrl) + '" id="edit-url-' + linkId + '" placeholder="URL">' +
+        '<div class="bio-edit-inline-actions">' +
+            '<button type="button" class="btn-primary-small" onclick="saveLinkEdit(' + linkId + ')">Save</button>' +
+            '<button type="button" class="btn-secondary" onclick="cancelLinkEdit(' + linkId + ', \'' + escapeAttr(currentTitle) + '\', \'' + escapeAttr(currentUrl) + '\')">Cancel</button>' +
+        '</div>';
+
+    document.getElementById('edit-title-' + linkId).focus();
+}
+
+function escapeAttr(text) {
+    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function saveLinkEdit(linkId) {
+    var title = document.getElementById('edit-title-' + linkId).value.trim();
+    var url = document.getElementById('edit-url-' + linkId).value.trim();
+
+    if (!title || !url) {
+        showFlash('Title and URL are required', 'error');
+        return;
+    }
+
+    fetch('/api/bio/links/' + linkId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, url: url }),
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            var item = document.querySelector('[data-id="' + linkId + '"]');
+            var content = item.querySelector('.bio-link-content');
+            content.innerHTML =
+                '<div class="bio-link-title-display">' + escapeHtml(data.link.title) + '</div>' +
+                '<div class="bio-link-url-display">' + escapeHtml(data.link.url) + '</div>';
+            showFlash('Link updated!', 'success');
+        } else {
+            showFlash(data.error || 'Failed to update', 'error');
+        }
+    });
+}
+
+function cancelLinkEdit(linkId, title, url) {
+    var item = document.querySelector('[data-id="' + linkId + '"]');
+    var content = item.querySelector('.bio-link-content');
+    content.innerHTML =
+        '<div class="bio-link-title-display">' + escapeHtml(title) + '</div>' +
+        '<div class="bio-link-url-display">' + escapeHtml(url) + '</div>';
+}
+
+// Delete link
+function deleteLink(linkId) {
+    if (!confirm('Delete this link?')) return;
+
+    fetch('/api/bio/links/' + linkId, {
+        method: 'DELETE',
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+            var item = document.querySelector('[data-id="' + linkId + '"]');
+            item.remove();
+            showFlash('Link deleted', 'success');
+            if (document.querySelectorAll('.bio-link-item').length === 0) {
+                var list = document.getElementById('bio-links-list');
+                list.insertAdjacentHTML('afterend', '<div class="bio-empty-links" id="bio-empty-links"><p>No links yet. Add your first link above.</p></div>');
+            }
+        } else {
+            showFlash(data.error || 'Failed to delete', 'error');
+        }
+    });
+}
+
+// SortableJS for drag-and-drop
+if (BIO_PAGE_EXISTS && typeof Sortable !== 'undefined') {
+    var linksList = document.getElementById('bio-links-list');
+    if (linksList) {
+        Sortable.create(linksList, {
+            handle: '.bio-link-drag-handle',
+            animation: 150,
+            ghostClass: 'bio-link-ghost',
+            onEnd: function() {
+                var items = linksList.querySelectorAll('.bio-link-item');
+                var order = [];
+                items.forEach(function(item, index) {
+                    order.push({ id: parseInt(item.getAttribute('data-id')), position: index });
+                });
+                fetch('/api/bio/links/reorder', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order: order }),
+                }).then(function(r) { return r.json(); }).then(function(data) {
+                    if (!data.success) {
+                        showFlash('Failed to save order', 'error');
+                    }
+                });
+            },
+        });
+    }
+}
+</script>
+{% endblock %}

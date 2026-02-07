@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.display_name or '@' + page.username }} - Briefen</title>
+    <meta name="description" content="{{ page.bio or (page.display_name or page.username) + ' - Links' }}">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Theme: Default */
+        .theme-default {
+            --bio-bg: #f0f9ff;
+            --bio-text: #1f2937;
+            --bio-text-secondary: #6b7280;
+            --bio-card-bg: #ffffff;
+            --bio-card-border: #e0f2fe;
+            --bio-card-hover: #0284c7;
+            --bio-card-hover-text: #ffffff;
+            --bio-link-text: #1f2937;
+            --bio-avatar-border: #0284c7;
+            --bio-footer-text: #9ca3af;
+        }
+
+        /* Theme: Dark */
+        .theme-dark {
+            --bio-bg: #111827;
+            --bio-text: #f9fafb;
+            --bio-text-secondary: #9ca3af;
+            --bio-card-bg: #1f2937;
+            --bio-card-border: #374151;
+            --bio-card-hover: #374151;
+            --bio-card-hover-text: #f9fafb;
+            --bio-link-text: #f9fafb;
+            --bio-avatar-border: #8b5cf6;
+            --bio-footer-text: #6b7280;
+        }
+
+        /* Theme: Minimal */
+        .theme-minimal {
+            --bio-bg: #ffffff;
+            --bio-text: #111827;
+            --bio-text-secondary: #6b7280;
+            --bio-card-bg: transparent;
+            --bio-card-border: #111827;
+            --bio-card-hover: #111827;
+            --bio-card-hover-text: #ffffff;
+            --bio-link-text: #111827;
+            --bio-avatar-border: #111827;
+            --bio-footer-text: #9ca3af;
+        }
+
+        /* Theme: Colorful */
+        .theme-colorful {
+            --bio-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bio-text: #ffffff;
+            --bio-text-secondary: rgba(255, 255, 255, 0.8);
+            --bio-card-bg: rgba(255, 255, 255, 0.15);
+            --bio-card-border: rgba(255, 255, 255, 0.3);
+            --bio-card-hover: rgba(255, 255, 255, 0.3);
+            --bio-card-hover-text: #ffffff;
+            --bio-link-text: #ffffff;
+            --bio-avatar-border: rgba(255, 255, 255, 0.8);
+            --bio-footer-text: rgba(255, 255, 255, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--bio-bg);
+            color: var(--bio-text);
+        }
+
+        body.theme-colorful {
+            background-attachment: fixed;
+        }
+
+        .bio-container {
+            width: 100%;
+            max-width: 680px;
+            padding: 3rem 1.5rem;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .bio-avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            border: 3px solid var(--bio-avatar-border);
+            object-fit: cover;
+            margin-bottom: 1rem;
+        }
+
+        .bio-avatar-placeholder {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            border: 3px solid var(--bio-avatar-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            color: var(--bio-text);
+            background: var(--bio-card-bg);
+        }
+
+        .bio-display-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--bio-text);
+            margin-bottom: 0.25rem;
+            text-align: center;
+        }
+
+        .bio-username {
+            font-size: 0.875rem;
+            color: var(--bio-text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .bio-text {
+            font-size: 0.9375rem;
+            color: var(--bio-text-secondary);
+            text-align: center;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            max-width: 480px;
+        }
+
+        .bio-links {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .bio-link-card {
+            display: block;
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: var(--bio-card-bg);
+            border: 1px solid var(--bio-card-border);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--bio-link-text);
+            font-weight: 500;
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .bio-link-card:hover {
+            background: var(--bio-card-hover);
+            color: var(--bio-card-hover-text);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        body.theme-colorful .bio-link-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        body.theme-minimal .bio-link-card {
+            border-width: 2px;
+            border-radius: 0;
+        }
+
+        .bio-footer {
+            margin-top: 3rem;
+            padding-bottom: 2rem;
+            text-align: center;
+        }
+
+        .bio-footer a {
+            color: var(--bio-footer-text);
+            text-decoration: none;
+            font-size: 0.8125rem;
+            transition: opacity 0.2s;
+        }
+
+        .bio-footer a:hover {
+            opacity: 0.7;
+        }
+
+        @media (max-width: 480px) {
+            .bio-container {
+                padding: 2rem 1rem;
+            }
+
+            .bio-avatar,
+            .bio-avatar-placeholder {
+                width: 80px;
+                height: 80px;
+            }
+
+            .bio-display-name {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body class="theme-{{ page.theme }}">
+    <div class="bio-container">
+        {% if page.avatar_display_url %}
+            <img src="{{ page.avatar_display_url }}" alt="{{ page.display_name or page.username }}" class="bio-avatar">
+        {% else %}
+            <div class="bio-avatar-placeholder">
+                {{ (page.display_name or page.username)[0]|upper }}
+            </div>
+        {% endif %}
+
+        <h1 class="bio-display-name">{{ page.display_name or page.username }}</h1>
+        <p class="bio-username">@{{ page.username }}</p>
+
+        {% if page.bio %}
+            <p class="bio-text">{{ page.bio }}</p>
+        {% endif %}
+
+        <div class="bio-links">
+            {% for link in links %}
+                <a href="{{ link.url }}"
+                   class="bio-link-card"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   data-link-id="{{ link.id }}"
+                   onclick="trackClick({{ link.id }})">
+                    {{ link.title }}
+                </a>
+            {% endfor %}
+        </div>
+
+        <div class="bio-footer">
+            <a href="{{ url_for('web.index') }}">Powered by Briefen</a>
+        </div>
+    </div>
+
+<script>
+function trackClick(linkId) {
+    navigator.sendBeacon('/api/bio/links/' + linkId + '/click');
+}
+</script>
+</body>
+</html>

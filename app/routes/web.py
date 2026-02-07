@@ -3,6 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
 from app.models.url import URL
+from app.models.bio import BioPage, BioLink
 from app.services.email_service import send_password_reset_email
 from app.services.analytics_service import record_click
 from datetime import datetime
@@ -16,6 +17,16 @@ bp = Blueprint('web', __name__)
 def index():
     """Homepage with URL shortener form."""
     return render_template('index.html')
+
+
+@bp.route('/@<username>')
+def bio_page(username):
+    """Public bio page."""
+    page = BioPage.query.filter_by(username=username).first_or_404()
+    links = BioLink.query.filter_by(
+        bio_page_id=page.id, is_active=True
+    ).order_by(BioLink.position).all()
+    return render_template('bio_page.html', page=page, links=links)
 
 
 @bp.route('/<slug>')
@@ -208,7 +219,22 @@ def dashboard():
         URL.created_at.desc()
     ).paginate(page=page, per_page=per_page, error_out=False)
     urls = pagination.items
-    return render_template('dashboard.html', urls=urls, pagination=pagination)
+    bio_page = BioPage.query.filter_by(user_id=current_user.id).first()
+    return render_template('dashboard.html', urls=urls, pagination=pagination, bio_page=bio_page)
+
+
+@bp.route('/bio/edit')
+@login_required
+def bio_editor():
+    """Bio page editor."""
+    page = BioPage.query.filter_by(user_id=current_user.id).first()
+    links = []
+    if page:
+        links = BioLink.query.filter_by(
+            bio_page_id=page.id
+        ).order_by(BioLink.position).all()
+    user_urls = URL.query.filter_by(user_id=current_user.id).order_by(URL.created_at.desc()).all()
+    return render_template('bio_editor.html', page=page, links=links, user_urls=user_urls)
 
 
 @bp.route('/delete/<int:url_id>', methods=['POST'])
@@ -294,6 +320,7 @@ Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /delete/
 Disallow: /analytics/
+Disallow: /bio/edit
 Disallow: /api/
 
 # Sitemap location

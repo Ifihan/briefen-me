@@ -35,6 +35,8 @@ class Config:
 
     TEXT_PROXY_URL = os.getenv("TEXT_PROXY_URL", "https://r.jina.ai/http://")
 
+    IP_HASH_SALT = os.getenv("IP_HASH_SALT", "briefen-default-salt-change-in-production")
+
     CACHE_TYPE = os.getenv("CACHE_TYPE", "simple")
     CACHE_DEFAULT_TIMEOUT = 300
 

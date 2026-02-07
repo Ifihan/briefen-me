@@ -66,6 +66,14 @@
                             </svg>
                             QR Code
                         </button>
+                        <a href="{{ url_for('web.analytics', slug=url.slug) }}" class="analytics-btn" aria-label="View analytics for {{ url.slug }}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="18" y1="20" x2="18" y2="10"/>
+                                <line x1="12" y1="20" x2="12" y2="4"/>
+                                <line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                            Analytics
+                        </a>
                         <button type="button" id="edit-btn-{{ url.id }}" onclick="startEdit({{ url.id }}, '{{ url.slug }}')" aria-label="Edit slug {{ url.slug }}">Edit Slug</button>
                         {% if current_user.is_subadmin %}
                         <button type="button" id="edit-url-btn-{{ url.id }}" onclick="startUrlEdit({{ url.id }})" aria-label="Edit destination URL">Edit URL</button>

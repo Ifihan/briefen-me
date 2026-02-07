@@ -18,4 +18,5 @@ dependencies = [
     "qrcode[pil]>=7.4.2",
     "flask-cors>=6.0.1",
     "pyjwt>=2.10.1",
+    "user-agents>=2.2.0",
 ]

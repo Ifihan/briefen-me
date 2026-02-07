@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, Response, current_app, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
 from app.models.url import URL
 from app.services.email_service import send_password_reset_email
+from app.services.analytics_service import record_click
 from datetime import datetime
 import jwt
 import os
@@ -21,7 +22,7 @@ def index():
 def redirect_to_url(slug):
     """Redirect short URL to original URL."""
     url = URL.query.filter_by(slug=slug).first_or_404()
-    url.increment_clicks()
+    record_click(url, request, current_app)
     return redirect(url.original_url)
 
 
@@ -226,6 +227,18 @@ def delete_url(url_id):
     return redirect(url_for('web.dashboard'))
 
 
+@bp.route('/analytics/<slug>')
+@login_required
+def analytics(slug):
+    """Analytics page for a shortened URL."""
+    url = URL.query.filter_by(slug=slug).first_or_404()
+
+    if url.user_id != current_user.id:
+        abort(404)
+
+    return render_template('analytics.html', url=url)
+
+
 @bp.route('/privacy')
 def privacy():
     """Privacy policy page."""
@@ -280,6 +293,7 @@ Disallow: /create
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /delete/
+Disallow: /analytics/
 Disallow: /api/
 
 # Sitemap location

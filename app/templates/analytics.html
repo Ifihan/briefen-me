@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - {{ url.slug }} - Briefen{% endblock %}
+
+{% block content %}
+<div class="analytics-toolbar">
+    <div class="analytics-toolbar-inner">
+        <a href="{{ url_for('web.dashboard') }}" class="analytics-back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Dashboard
+        </a>
+        <h2>Link Analytics</h2>
+        <div class="time-range-filter">
+            <button type="button" class="time-range-btn" data-days="7">7 Days</button>
+            <button type="button" class="time-range-btn" data-days="30">30 Days</button>
+            <button type="button" class="time-range-btn active" data-days="">All Time</button>
+        </div>
+    </div>
+</div>
+
+<div class="container analytics-container">
+    <div class="analytics-url-info">
+        <div class="short-url">{{ request.host_url }}{{ url.slug }}</div>
+        <div class="original-url">Original: {{ url.original_url }}</div>
+    </div>
+
+    <div class="analytics-stats">
+        <div class="stat-card">
+            <div class="stat-value" id="total-clicks">{{ url.click_count }}</div>
+            <div class="stat-label">Total Clicks</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="unique-countries">-</div>
+            <div class="stat-label">Countries</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="top-device">-</div>
+            <div class="stat-label">Top Device</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="top-browser">-</div>
+            <div class="stat-label">Top Browser</div>
+        </div>
+    </div>
+
+    <div class="analytics-charts">
+        <div class="chart-card">
+            <h3>Clicks Over Time</h3>
+            <canvas id="clicks-chart"></canvas>
+            <div class="analytics-empty" id="clicks-empty" style="display: none;">No click data yet</div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-card">
+                <h3>Devices</h3>
+                <canvas id="devices-chart"></canvas>
+                <div class="analytics-empty" id="devices-empty" style="display: none;">No device data yet</div>
+            </div>
+            <div class="chart-card">
+                <h3>Browsers</h3>
+                <canvas id="browsers-chart"></canvas>
+                <div class="analytics-empty" id="browsers-empty" style="display: none;">No browser data yet</div>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-card">
+                <h3>Top Countries</h3>
+                <canvas id="countries-chart"></canvas>
+                <div class="analytics-empty" id="countries-empty" style="display: none;">No country data yet</div>
+            </div>
+            <div class="chart-card">
+                <h3>Top Referrers</h3>
+                <canvas id="referrers-chart"></canvas>
+                <div class="analytics-empty" id="referrers-empty" style="display: none;">No referrer data yet</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+const URL_SLUG = '{{ url.slug }}';
+let clicksChart, devicesChart, browsersChart, countriesChart, referrersChart;
+
+const COLORS = {
+    primary: '#0284c7',
+    accent: '#8b5cf6',
+    success: '#22c55e',
+    error: '#ef4444',
+    palette: ['#0284c7', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1']
+};
+
+async function fetchAnalytics(days) {
+    const params = days ? `?days=${days}` : '';
+    try {
+        const response = await fetch(`/api/analytics/${URL_SLUG}${params}`);
+        const data = await response.json();
+        if (data.success) {
+            renderAnalytics(data.analytics);
+        }
+    } catch (error) {
+        console.error('Error fetching analytics:', error);
+    }
+}
+
+function renderAnalytics(analytics) {
+    document.getElementById('total-clicks').textContent = analytics.total_clicks;
+    document.getElementById('unique-countries').textContent = analytics.countries.length;
+    document.getElementById('top-device').textContent =
+        analytics.devices.length > 0 ? capitalize(analytics.devices[0].device) : '-';
+    document.getElementById('top-browser').textContent =
+        analytics.browsers.length > 0 ? analytics.browsers[0].browser : '-';
+
+    renderClicksChart(analytics.clicks_over_time);
+    renderDoughnutChart('devices-chart', 'devices-empty', analytics.devices, 'device', function(c) { devicesChart = c; });
+    renderDoughnutChart('browsers-chart', 'browsers-empty', analytics.browsers, 'browser', function(c) { browsersChart = c; });
+    renderBarChart('countries-chart', 'countries-empty', analytics.countries, 'country', function(c) { countriesChart = c; });
+    renderBarChart('referrers-chart', 'referrers-empty', analytics.referrers, 'referrer', function(c) { referrersChart = c; });
+}
+
+function renderClicksChart(data) {
+    const canvas = document.getElementById('clicks-chart');
+    const empty = document.getElementById('clicks-empty');
+
+    if (clicksChart) clicksChart.destroy();
+
+    if (data.length === 0) {
+        canvas.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+
+    canvas.style.display = 'block';
+    empty.style.display = 'none';
+
+    clicksChart = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: data.map(function(d) { return d.date; }),
+            datasets: [{
+                label: 'Clicks',
+                data: data.map(function(d) { return d.count; }),
+                borderColor: COLORS.primary,
+                backgroundColor: COLORS.primary + '20',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } },
+                x: { ticks: { maxRotation: 45 } }
+            }
+        }
+    });
+}
+
+function renderDoughnutChart(canvasId, emptyId, data, labelKey, setRef) {
+    const canvas = document.getElementById(canvasId);
+    const empty = document.getElementById(emptyId);
+
+    // Destroy existing chart stored in the variable
+    if (canvasId === 'devices-chart' && devicesChart) devicesChart.destroy();
+    if (canvasId === 'browsers-chart' && browsersChart) browsersChart.destroy();
+
+    if (data.length === 0) {
+        canvas.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+
+    canvas.style.display = 'block';
+    empty.style.display = 'none';
+
+    var chart = new Chart(canvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: data.map(function(d) { return capitalize(d[labelKey]); }),
+            datasets: [{
+                data: data.map(function(d) { return d.count; }),
+                backgroundColor: COLORS.palette.slice(0, data.length)
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } }
+            }
+        }
+    });
+    setRef(chart);
+}
+
+function renderBarChart(canvasId, emptyId, data, labelKey, setRef) {
+    const canvas = document.getElementById(canvasId);
+    const empty = document.getElementById(emptyId);
+
+    if (canvasId === 'countries-chart' && countriesChart) countriesChart.destroy();
+    if (canvasId === 'referrers-chart' && referrersChart) referrersChart.destroy();
+
+    if (data.length === 0) {
+        canvas.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+
+    canvas.style.display = 'block';
+    empty.style.display = 'none';
+
+    var chart = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: data.map(function(d) { return d[labelKey] || 'Unknown'; }),
+            datasets: [{
+                data: data.map(function(d) { return d.count; }),
+                backgroundColor: COLORS.primary + '80',
+                borderColor: COLORS.primary,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
+    setRef(chart);
+}
+
+function capitalize(str) {
+    if (!str) return 'Unknown';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// Time range buttons
+document.querySelectorAll('.time-range-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.time-range-btn').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        fetchAnalytics(this.dataset.days || null);
+    });
+});
+
+// Initial load
+fetchAnalytics(null);
+</script>
+{% endblock %}

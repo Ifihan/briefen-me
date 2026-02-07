@@ -243,6 +243,45 @@ def generate_qrcode(url_id):
         return jsonify({"success": False, "error": "An internal error occurred while generating the QR code"}), 500
 
 
+@bp.route("/analytics/<slug>", methods=["GET"])
+@jwt_optional
+def get_analytics(slug):
+    """Get analytics data for a shortened URL."""
+    try:
+        # Support both JWT and session-based auth
+        user = None
+        if hasattr(request, 'current_user') and request.current_user:
+            user = request.current_user
+        elif current_user.is_authenticated:
+            user = current_user
+
+        if not user:
+            return jsonify({"success": False, "error": "Not found"}), 404
+
+        url_obj = URL.query.filter_by(slug=slug).first()
+        if not url_obj or url_obj.user_id != user.id:
+            return jsonify({"success": False, "error": "Not found"}), 404
+
+        days_param = request.args.get("days")
+        days = int(days_param) if days_param else None
+
+        from app.services.analytics_service import get_analytics as fetch_analytics
+
+        data = fetch_analytics(url_obj.id, days=days)
+
+        return jsonify({
+            "success": True,
+            "slug": url_obj.slug,
+            "original_url": url_obj.original_url,
+            "total_clicks": url_obj.click_count,
+            "analytics": data,
+        }), 200
+
+    except Exception as e:
+        logger.exception("Error fetching analytics")
+        return jsonify({"success": False, "error": "An internal error occurred while fetching analytics"}), 500
+
+
 @bp.route("/edit-url/<int:url_id>", methods=["PUT"])
 @subadmin_required
 def edit_url(url_id):

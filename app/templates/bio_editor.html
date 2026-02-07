@@ -3,8 +3,8 @@
 {% block title %}Bio Page Editor - Briefen{% endblock %}
 
 {% block content %}
-<div class="container bio-editor">
-    <div class="bio-editor-header">
+<div class="bio-editor-header">
+    <div class="bio-editor-header-inner">
         <h2>Link-in-Bio Page</h2>
         {% if page %}
             <a href="{{ url_for('web.bio_page', username=page.username) }}" class="bio-preview-link" target="_blank">
@@ -17,7 +17,9 @@
             </a>
         {% endif %}
     </div>
+</div>
 
+<div class="container bio-editor">
     <!-- Profile Section -->
     <div class="bio-section">
         <h3>Profile</h3>
@@ -80,7 +82,7 @@
         {% if not page %}
             <button type="button" class="btn-primary" id="create-bio-btn" onclick="createBioPage()">Create Bio Page</button>
         {% else %}
-            <button type="button" class="btn-primary" id="save-profile-btn" onclick="saveProfile()">Save Profile</button>
+            <button type="button" class="btn-primary btn-disabled" id="save-profile-btn" onclick="saveProfile()" disabled>Save Profile</button>
         {% endif %}
     </div>
 
@@ -259,6 +261,12 @@ document.getElementById('avatar-input').addEventListener('change', function(e) {
         return;
     }
 
+    // Add loading state
+    var uploadBtn = document.querySelector('.bio-upload-btn');
+    var originalHTML = uploadBtn.innerHTML;
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></path></svg> Uploading...';
+
     var formData = new FormData();
     formData.append('avatar', file);
 
@@ -287,6 +295,12 @@ document.getElementById('avatar-input').addEventListener('change', function(e) {
         }
     }).catch(function() {
         showFlash('Upload failed', 'error');
+    }).finally(function() {
+        // Remove loading state
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalHTML;
+        // Reset file input
+        e.target.value = '';
     });
 });
 
@@ -294,6 +308,52 @@ document.getElementById('avatar-input').addEventListener('change', function(e) {
 document.getElementById('bio-text').addEventListener('input', function() {
     document.getElementById('bio-char-count').textContent = this.value.length;
 });
+
+// Track profile changes
+if (BIO_PAGE_EXISTS) {
+    var originalProfileData = {
+        username: document.getElementById('bio-username') ? document.getElementById('bio-username').value.trim().toLowerCase() : '',
+        displayName: document.getElementById('bio-display-name') ? document.getElementById('bio-display-name').value.trim() : '',
+        bio: document.getElementById('bio-text') ? document.getElementById('bio-text').value.trim() : ''
+    };
+
+    function checkProfileChanges() {
+        var currentData = {
+            username: document.getElementById('bio-username') ? document.getElementById('bio-username').value.trim().toLowerCase() : '',
+            displayName: document.getElementById('bio-display-name') ? document.getElementById('bio-display-name').value.trim() : '',
+            bio: document.getElementById('bio-text') ? document.getElementById('bio-text').value.trim() : ''
+        };
+
+        var hasChanges = currentData.username !== originalProfileData.username ||
+                        currentData.displayName !== originalProfileData.displayName ||
+                        currentData.bio !== originalProfileData.bio;
+
+        var saveBtn = document.getElementById('save-profile-btn');
+        if (saveBtn) {
+            if (hasChanges) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('btn-disabled');
+            } else {
+                saveBtn.disabled = true;
+                saveBtn.classList.add('btn-disabled');
+            }
+        }
+    }
+
+    // Add event listeners to profile fields
+    if (document.getElementById('bio-username')) {
+        document.getElementById('bio-username').addEventListener('input', checkProfileChanges);
+    }
+    if (document.getElementById('bio-display-name')) {
+        document.getElementById('bio-display-name').addEventListener('input', checkProfileChanges);
+    }
+    if (document.getElementById('bio-text')) {
+        document.getElementById('bio-text').addEventListener('input', checkProfileChanges);
+    }
+
+    // Initialize button state
+    checkProfileChanges();
+}
 
 // Create bio page
 function createBioPage() {
@@ -347,14 +407,25 @@ function saveProfile() {
     }).then(function(r) { return r.json(); }).then(function(data) {
         if (data.success) {
             showFlash('Profile saved!', 'success');
+            // Update original data to current values
+            originalProfileData = {
+                username: username,
+                displayName: displayName,
+                bio: bio
+            };
+            // Disable button again since changes are saved
+            btn.disabled = true;
+            btn.classList.add('btn-disabled');
         } else {
             showFlash(data.error || 'Failed to save', 'error');
+            btn.disabled = false;
+            btn.classList.remove('btn-disabled');
         }
-        btn.disabled = false;
         btn.textContent = 'Save Profile';
     }).catch(function() {
         showFlash('Failed to save profile', 'error');
         btn.disabled = false;
+        btn.classList.remove('btn-disabled');
         btn.textContent = 'Save Profile';
     });
 }
@@ -405,6 +476,7 @@ function addBriefenLink() {
     var select = document.getElementById('new-link-select');
     var url = select.value;
     var title = document.getElementById('new-link-title-briefen').value.trim();
+    var addBtn = event.target;
 
     if (!url) {
         showFlash('Please select a link', 'error');
@@ -416,22 +488,38 @@ function addBriefenLink() {
         title = opt.getAttribute('data-slug');
     }
 
-    doAddLink(title, url);
+    doAddLink(title, url, addBtn, function() {
+        // Remove the selected option from dropdown after successful add
+        var selectedIndex = select.selectedIndex;
+        if (selectedIndex > 0) { // Don't remove the placeholder option
+            select.remove(selectedIndex);
+            select.selectedIndex = 0; // Reset to placeholder
+            document.getElementById('new-link-title-briefen').value = '';
+        }
+    });
 }
 
 function addSocialLink() {
     var title = document.getElementById('new-social-title').value.trim();
     var url = document.getElementById('new-social-url').value.trim();
+    var addBtn = event.target;
 
     if (!title || !url) {
         showFlash('Title and URL are required', 'error');
         return;
     }
 
-    doAddLink(title, url);
+    doAddLink(title, url, addBtn);
 }
 
-function doAddLink(title, url) {
+function doAddLink(title, url, button, onSuccess) {
+    // Add loading state
+    if (button) {
+        button.disabled = true;
+        button.dataset.originalText = button.textContent;
+        button.textContent = 'Adding...';
+    }
+
     fetch('/api/bio/links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -443,11 +531,18 @@ function doAddLink(title, url) {
             if (emptyMsg) emptyMsg.remove();
             appendLinkItem(data.link);
             showFlash('Link added!', 'success');
+            if (onSuccess) onSuccess();
         } else {
             showFlash(data.error || 'Failed to add link', 'error');
         }
     }).catch(function() {
         showFlash('Failed to add link', 'error');
+    }).finally(function() {
+        // Remove loading state
+        if (button) {
+            button.disabled = false;
+            button.textContent = button.dataset.originalText;
+        }
     });
 }
 
@@ -516,15 +611,33 @@ function editLink(linkId, btn) {
     var currentTitle = titleEl.textContent;
     var currentUrl = urlEl.textContent;
 
+    // Disable add link form while editing
+    disableAddLinkForm();
+
     content.innerHTML =
         '<input type="text" class="bio-edit-inline-input" value="' + escapeAttr(currentTitle) + '" id="edit-title-' + linkId + '" placeholder="Title">' +
-        '<input type="url" class="bio-edit-inline-input" value="' + escapeAttr(currentUrl) + '" id="edit-url-' + linkId + '" placeholder="URL">' +
+        '<div class="bio-link-url-display" style="opacity: 0.7; font-size: 0.875rem; margin-top: 0.25rem;">' + escapeHtml(currentUrl) + '</div>' +
+        '<input type="hidden" id="edit-url-' + linkId + '" value="' + escapeAttr(currentUrl) + '">' +
         '<div class="bio-edit-inline-actions">' +
             '<button type="button" class="btn-primary-small" onclick="saveLinkEdit(' + linkId + ')">Save</button>' +
             '<button type="button" class="btn-secondary" onclick="cancelLinkEdit(' + linkId + ', \'' + escapeAttr(currentTitle) + '\', \'' + escapeAttr(currentUrl) + '\')">Cancel</button>' +
         '</div>';
 
     document.getElementById('edit-title-' + linkId).focus();
+}
+
+function disableAddLinkForm() {
+    var addLinkBtn = document.querySelector('.bio-add-link-header button');
+    var addLinkInputs = document.querySelectorAll('.bio-add-link-form input, .bio-add-link-form select, .bio-add-link-form button');
+    if (addLinkBtn) addLinkBtn.disabled = true;
+    addLinkInputs.forEach(function(input) { input.disabled = true; });
+}
+
+function enableAddLinkForm() {
+    var addLinkBtn = document.querySelector('.bio-add-link-header button');
+    var addLinkInputs = document.querySelectorAll('.bio-add-link-form input, .bio-add-link-form select, .bio-add-link-form button');
+    if (addLinkBtn) addLinkBtn.disabled = false;
+    addLinkInputs.forEach(function(input) { input.disabled = false; });
 }
 
 function escapeAttr(text) {
@@ -540,6 +653,12 @@ function saveLinkEdit(linkId) {
         return;
     }
 
+    // Add loading state
+    var saveBtn = event.target;
+    saveBtn.disabled = true;
+    var originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Saving...';
+
     fetch('/api/bio/links/' + linkId, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -552,9 +671,15 @@ function saveLinkEdit(linkId) {
                 '<div class="bio-link-title-display">' + escapeHtml(data.link.title) + '</div>' +
                 '<div class="bio-link-url-display">' + escapeHtml(data.link.url) + '</div>';
             showFlash('Link updated!', 'success');
+            enableAddLinkForm();
         } else {
             showFlash(data.error || 'Failed to update', 'error');
         }
+    }).catch(function() {
+        showFlash('Failed to update link', 'error');
+    }).finally(function() {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
     });
 }
 
@@ -564,11 +689,18 @@ function cancelLinkEdit(linkId, title, url) {
     content.innerHTML =
         '<div class="bio-link-title-display">' + escapeHtml(title) + '</div>' +
         '<div class="bio-link-url-display">' + escapeHtml(url) + '</div>';
+    enableAddLinkForm();
 }
 
 // Delete link
 function deleteLink(linkId) {
     if (!confirm('Delete this link?')) return;
+
+    // Add loading state - disable the delete button
+    var deleteBtn = event.target;
+    deleteBtn.disabled = true;
+    var originalHTML = deleteBtn.innerHTML;
+    deleteBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
 
     fetch('/api/bio/links/' + linkId, {
         method: 'DELETE',
@@ -583,7 +715,13 @@ function deleteLink(linkId) {
             }
         } else {
             showFlash(data.error || 'Failed to delete', 'error');
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = originalHTML;
         }
+    }).catch(function() {
+        showFlash('Failed to delete link', 'error');
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalHTML;
     });
 }
 
@@ -614,5 +752,17 @@ if (BIO_PAGE_EXISTS && typeof Sortable !== 'undefined') {
         });
     }
 }
+
+// Add scrolled class to header when scrolling
+window.addEventListener('scroll', function() {
+    var header = document.querySelector('.bio-editor-header');
+    if (header) {
+        if (window.scrollY > 20) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    }
+});
 </script>
 {% endblock %}

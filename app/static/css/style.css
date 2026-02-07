@@ -314,10 +314,11 @@ button:active:not(:disabled), .btn:active {
     transform: translateY(0);
 }
 
-button:disabled {
-    opacity: 0.6;
+button:disabled, .btn-disabled {
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none !important;
+    background: var(--gray-400) !important;
 }
 
 /* Main Content */
@@ -1880,20 +1881,42 @@ button:disabled {
 
 .bio-editor {
     max-width: 720px;
-    padding-top: var(--space-8);
+    padding-top: 0;
     padding-bottom: var(--space-12);
 }
 
 .bio-editor-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.85);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-3) 0;
+    margin-bottom: var(--space-8);
+    transition: all 0.2s ease;
+}
+
+.bio-editor-header.scrolled {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bio-editor-header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
     display: flex;
     align-items: center;
+    gap: var(--space-4);
     justify-content: space-between;
-    margin-bottom: var(--space-8);
 }
 
 .bio-editor-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 800;
     color: var(--text-primary);
+    margin: 0;
 }
 
 .bio-preview-link {
@@ -2399,6 +2422,13 @@ button.bio-link-delete-btn:hover {
 .bio-edit-inline-actions {
     display: flex;
     gap: var(--space-2);
+    margin-top: var(--space-3);
+}
+
+.bio-edit-inline-actions button,
+.bio-add-link-actions button {
+    padding: var(--space-2) var(--space-4);
+    font-size: 0.875rem;
 }
 
 .bio-empty-links {

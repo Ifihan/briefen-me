@@ -587,7 +587,7 @@ def upload_bio_avatar():
 
     except (ValueError, RuntimeError) as e:
         logger.warning("Avatar upload validation error: %s", e)
-        return jsonify({"success": False, "error": str(e)}), 400
+        return jsonify({"success": False, "error": "Invalid avatar upload"}), 400
     except Exception:
         db.session.rollback()
         logger.exception("Error uploading avatar")

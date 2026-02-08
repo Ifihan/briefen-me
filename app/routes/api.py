@@ -586,11 +586,12 @@ def upload_bio_avatar():
         }), 200
 
     except (ValueError, RuntimeError) as e:
+        logger.warning("Avatar upload validation error: %s", e)
         return jsonify({"success": False, "error": str(e)}), 400
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error uploading avatar")
-        return jsonify({"success": False, "error": f"Upload failed: {e}"}), 500
+        return jsonify({"success": False, "error": "Upload failed"}), 500
 
 
 @bp.route("/avatar/<path:blob_name>", methods=["GET"])

@@ -47,6 +47,7 @@ def create_app(config_class=Config):
     # Create tables
     with app.app_context():
         from app.models.click import Click  # noqa: F401
+        from app.models.bio import BioPage, BioLink  # noqa: F401
 
         db.create_all()
 

@@ -110,6 +110,7 @@
                 {% if current_user.is_authenticated %}
                     <li><a href="{{ url_for('web.create') }}" class="nav-link">Create Link</a></li>
                     <li><a href="{{ url_for('web.dashboard') }}" class="nav-link">Dashboard</a></li>
+                    <li><a href="{{ url_for('web.bio_editor') }}" class="nav-link">Bio Page</a></li>
                     <li><a href="{{ url_for('web.logout') }}" class="nav-link">Logout</a></li>
                 {% else %}
                     <li><a href="{{ url_for('web.login') }}" class="nav-link">Login</a></li>

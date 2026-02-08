@@ -6,6 +6,16 @@
 <div class="container">
     <h2>Your Shortened URLs</h2>
 
+    {% if not bio_page %}
+    <div class="bio-cta">
+        <div class="bio-cta-text">
+            <strong>Create your Link-in-Bio page</strong>
+            Share all your links in one place with a personalized page.
+        </div>
+        <a href="{{ url_for('web.bio_editor') }}" class="btn-primary-small">Set Up Bio Page</a>
+    </div>
+    {% endif %}
+
     {% if urls %}
         <div class="dashboard-urls">
             {% for url in urls %}

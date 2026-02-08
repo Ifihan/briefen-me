@@ -19,4 +19,5 @@ dependencies = [
     "flask-cors>=6.0.1",
     "pyjwt>=2.10.1",
     "user-agents>=2.2.0",
+    "google-cloud-storage>=2.14.0",
 ]

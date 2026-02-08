@@ -35,10 +35,16 @@ class Config:
 
     TEXT_PROXY_URL = os.getenv("TEXT_PROXY_URL", "https://r.jina.ai/http://")
 
-    IP_HASH_SALT = os.getenv("IP_HASH_SALT", "briefen-default-salt-change-in-production")
+    IP_HASH_SALT = os.getenv(
+        "IP_HASH_SALT", "briefen-default-salt-change-in-production"
+    )
 
     CACHE_TYPE = os.getenv("CACHE_TYPE", "simple")
     CACHE_DEFAULT_TIMEOUT = 300
+
+    GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
+    GCS_PROJECT_ID = os.getenv("GCS_PROJECT_ID")
+    MAX_AVATAR_SIZE = 2 * 1024 * 1024  # 2MB
 
     MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
     MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN", "mail.briefen.me")

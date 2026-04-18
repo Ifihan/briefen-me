@@ -1,8 +1,9 @@
+import json
+import re
+import time
+
 import google.generativeai as genai
 from flask import current_app
-import re
-import json
-import time
 
 
 def configure_gemini():
@@ -103,7 +104,7 @@ def generate_slugs_with_thinking(title, description, content, num_options=5):
         yield json.dumps({"type": "slugs", "slugs": valid_slugs})
 
     except Exception as e:
-        raise Exception(f"AI generation failed: {str(e)}")
+        raise Exception(f"AI generation failed: {str(e)}") from e
 
 
 def generate_slugs_with_ai_thinking(title, description, content, num_options=5):
@@ -220,7 +221,7 @@ def generate_slugs_with_ai_thinking(title, description, content, num_options=5):
         yield json.dumps({"type": "slugs", "slugs": valid_slugs})
 
     except Exception as e:
-        raise Exception(f"AI generation failed: {str(e)}")
+        raise Exception(f"AI generation failed: {str(e)}") from e
 
 
 def generate_slugs_from_content(title, description, content, num_options=5):
@@ -269,4 +270,4 @@ def generate_slugs_from_content(title, description, content, num_options=5):
         return slugs[:num_options]
 
     except Exception as e:
-        raise Exception(f"AI generation failed: {str(e)}")
+        raise Exception(f"AI generation failed: {str(e)}") from e

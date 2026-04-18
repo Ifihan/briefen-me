@@ -1,6 +1,6 @@
-import os
-import uuid
 import logging
+import uuid
+
 from flask import current_app
 from google.cloud import storage
 

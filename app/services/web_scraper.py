@@ -1,10 +1,9 @@
+from urllib.parse import urlparse, urlunparse
+
 import requests
 from bs4 import BeautifulSoup
-from requests.exceptions import Timeout, ConnectionError, HTTPError, TooManyRedirects
-from urllib.parse import urlparse, urlunparse
-from typing import Optional, Dict
 from flask import current_app
-
+from requests.exceptions import ConnectionError, HTTPError, Timeout, TooManyRedirects
 
 _PLACEHOLDER_PATTERNS = [
     "enable javascript",
@@ -14,7 +13,7 @@ _PLACEHOLDER_PATTERNS = [
 ]
 
 
-def scrape_webpage(url: str, timeout: int = 15) -> Dict:
+def scrape_webpage(url: str, timeout: int = 15) -> dict:
     """
     Scrape webpage content for AI analysis with comprehensive error handling.
     Returns dict with title, description, and main content.
@@ -65,7 +64,7 @@ def scrape_webpage(url: str, timeout: int = 15) -> Dict:
                     "error_type": "invalid_content",
                 }
 
-            def _looks_like_js_blocked(text: Optional[str]) -> bool:
+            def _looks_like_js_blocked(text: str | None) -> bool:
                 if not text:
                     return False
                 lower = text.lower()
@@ -73,7 +72,7 @@ def scrape_webpage(url: str, timeout: int = 15) -> Dict:
 
             parsed = urlparse(url)
             host = parsed.netloc.lower() if parsed.netloc else ""
-            fallback_used: Optional[str] = None
+            fallback_used: str | None = None
 
             # Properly check if the host is twitter.com or x.com (including subdomains)
             is_twitter = host == "twitter.com" or host.endswith(".twitter.com")
@@ -81,9 +80,13 @@ def scrape_webpage(url: str, timeout: int = 15) -> Dict:
 
             if _looks_like_js_blocked(response.text) and (is_twitter or is_x):
                 try:
-                    fallbacks = current_app.config.get("TWITTER_FALLBACKS", ["nitter.net"])
+                    fallbacks = current_app.config.get(
+                        "TWITTER_FALLBACKS", ["nitter.net"]
+                    )
                     if isinstance(fallbacks, str):
-                        fallbacks = [h.strip() for h in fallbacks.split(",") if h.strip()]
+                        fallbacks = [
+                            h.strip() for h in fallbacks.split(",") if h.strip()
+                        ]
 
                     tried = []
                     for fb in fallbacks:
@@ -93,25 +96,36 @@ def scrape_webpage(url: str, timeout: int = 15) -> Dict:
                         fb_url = urlunparse(fb_parsed)
                         tried.append(fb_url)
                         fb_resp = session.get(fb_url, headers=headers, timeout=timeout)
-                        if fb_resp.status_code == 200 and "text/html" in fb_resp.headers.get("Content-Type", "") and not _looks_like_js_blocked(fb_resp.text):
+                        if (
+                            fb_resp.status_code == 200
+                            and "text/html" in fb_resp.headers.get("Content-Type", "")
+                            and not _looks_like_js_blocked(fb_resp.text)
+                        ):
                             response = fb_resp
                             url = fb_url
                             fallback_used = fb
                             break
 
-                    if (not response or _looks_like_js_blocked(response.text)):
+                    if not response or _looks_like_js_blocked(response.text):
                         text_proxy = current_app.config.get("TEXT_PROXY_URL")
                         if text_proxy:
                             tp = text_proxy.strip()
-                            if not tp.endswith("http://") and not tp.endswith("https://"):
+                            if not tp.endswith("http://") and not tp.endswith(
+                                "https://"
+                            ):
                                 tp = tp.rstrip("/") + "/http://"
 
                             proxy_url = tp + parsed.netloc + parsed.path
                             if parsed.query:
                                 proxy_url += f"?{parsed.query}"
 
-                            proxy_resp = session.get(proxy_url, headers=headers, timeout=timeout)
-                            if proxy_resp.status_code == 200 and len(proxy_resp.text or "") > 50:
+                            proxy_resp = session.get(
+                                proxy_url, headers=headers, timeout=timeout
+                            )
+                            if (
+                                proxy_resp.status_code == 200
+                                and len(proxy_resp.text or "") > 50
+                            ):
                                 response = proxy_resp
                                 url = proxy_url
                                 fallback_used = "text-proxy"

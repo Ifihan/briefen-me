@@ -1,17 +1,19 @@
-from flask import Blueprint, request, jsonify, Response, stream_with_context, send_file
-from flask_login import current_user, login_required
-from app import db
-from app.models.url import URL
-from app.models.bio import BioPage, BioLink
-from app.services.url_validator import validate_url
-from app.services.slug_generator import generate_slug_options
-from app.services.storage_service import upload_avatar, delete_avatar, get_avatar
-from app.utils.auth_decorators import jwt_optional, subadmin_required
-import qrcode
-from io import BytesIO
-import re
 import logging
+import re
 from datetime import datetime
+from io import BytesIO
+
+import qrcode
+from flask import Blueprint, Response, jsonify, request, send_file, stream_with_context
+from flask_login import current_user, login_required
+
+from app import db
+from app.models.bio import BioLink, BioPage
+from app.models.url import URL
+from app.services.slug_generator import generate_slug_options
+from app.services.storage_service import delete_avatar, get_avatar, upload_avatar
+from app.services.url_validator import validate_url
+from app.utils.auth_decorators import jwt_optional, subadmin_required
 
 logger = logging.getLogger(__name__)
 
@@ -34,34 +36,34 @@ def _parse_expires_at(value):
             return None, "Expiration date must be in the future"
         return dt, None
     except (ValueError, TypeError):
-        return None, "Invalid expires_at format. Use ISO 8601 (e.g., 2025-12-31T23:59:59)"
+        return (
+            None,
+            "Invalid expires_at format. Use ISO 8601 (e.g., 2025-12-31T23:59:59)",
+        )
 
 
 def _is_social_media_url(url):
     """Check if a URL is a social media platform."""
     social_patterns = [
-        r'(twitter\.com|x\.com)',
-        r'linkedin\.com',
-        r'github\.com',
-        r'instagram\.com',
-        r'facebook\.com',
-        r'youtube\.com',
-        r'tiktok\.com',
-        r'discord\.(gg|com)',
-        r't\.me',
-        r'(wa\.me|whatsapp\.com)',
-        r'snapchat\.com',
-        r'reddit\.com',
-        r'pinterest\.com',
-        r'twitch\.tv',
-        r'medium\.com',
+        r"(twitter\.com|x\.com)",
+        r"linkedin\.com",
+        r"github\.com",
+        r"instagram\.com",
+        r"facebook\.com",
+        r"youtube\.com",
+        r"tiktok\.com",
+        r"discord\.(gg|com)",
+        r"t\.me",
+        r"(wa\.me|whatsapp\.com)",
+        r"snapchat\.com",
+        r"reddit\.com",
+        r"pinterest\.com",
+        r"twitch\.tv",
+        r"medium\.com",
     ]
 
     url_lower = url.lower()
-    for pattern in social_patterns:
-        if re.search(pattern, url_lower):
-            return True
-    return False
+    return any(re.search(pattern, url_lower) for pattern in social_patterns)
 
 
 @bp.route("/generate-slugs", methods=["POST"])
@@ -135,12 +137,17 @@ def create_short_url():
 
         # Support both JWT and session-based auth
         user_id = None
-        if hasattr(request, 'current_user') and request.current_user:
+        if hasattr(request, "current_user") and request.current_user:
             user_id = request.current_user.id
         elif current_user.is_authenticated:
             user_id = current_user.id
 
-        new_url = URL(original_url=normalized_url, slug=slug, user_id=user_id, expires_at=expires_at)
+        new_url = URL(
+            original_url=normalized_url,
+            slug=slug,
+            user_id=user_id,
+            expires_at=expires_at,
+        )
 
         db.session.add(new_url)
         db.session.commit()
@@ -153,17 +160,24 @@ def create_short_url():
                     "slug": slug,
                     "short_url": request.host_url + slug,
                     "original_url": normalized_url,
-                    "expires_at": new_url.expires_at.isoformat() + "Z" if new_url.expires_at else None,
+                    "expires_at": new_url.expires_at.isoformat() + "Z"
+                    if new_url.expires_at
+                    else None,
                     "is_expired": new_url.is_expired,
                 }
             ),
             201,
         )
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error creating short URL")
-        return jsonify({"success": False, "error": "An internal error occurred while creating the short URL"}), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": "An internal error occurred while creating the short URL",
+            }
+        ), 500
 
 
 @bp.route("/edit-slug/<int:url_id>", methods=["PUT"])
@@ -249,18 +263,25 @@ def edit_slug(url_id):
                     "new_slug": new_slug,
                     "short_url": request.host_url + new_slug,
                     "url_id": url_id,
-                    "expires_at": url_obj.expires_at.isoformat() + "Z" if url_obj.expires_at else None,
+                    "expires_at": url_obj.expires_at.isoformat() + "Z"
+                    if url_obj.expires_at
+                    else None,
                     "is_expired": url_obj.is_expired,
                 }
             ),
             200,
         )
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error editing slug")
         return (
-            jsonify({"success": False, "error": "An internal error occurred while editing the slug"}),
+            jsonify(
+                {
+                    "success": False,
+                    "error": "An internal error occurred while editing the slug",
+                }
+            ),
             500,
         )
 
@@ -307,12 +328,17 @@ def generate_qrcode(url_id):
             download_name=f"qrcode-{url_obj.slug}.png",
         )
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error generating QR code")
         if img_io:
             img_io.close()
-        return jsonify({"success": False, "error": "An internal error occurred while generating the QR code"}), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": "An internal error occurred while generating the QR code",
+            }
+        ), 500
 
 
 @bp.route("/analytics/<slug>", methods=["GET"])
@@ -322,7 +348,7 @@ def get_analytics(slug):
     try:
         # Support both JWT and session-based auth
         user = None
-        if hasattr(request, 'current_user') and request.current_user:
+        if hasattr(request, "current_user") and request.current_user:
             user = request.current_user
         elif current_user.is_authenticated:
             user = current_user
@@ -341,19 +367,28 @@ def get_analytics(slug):
 
         data = fetch_analytics(url_obj.id, days=days)
 
-        return jsonify({
-            "success": True,
-            "slug": url_obj.slug,
-            "original_url": url_obj.original_url,
-            "total_clicks": url_obj.click_count,
-            "analytics": data,
-            "expires_at": url_obj.expires_at.isoformat() + "Z" if url_obj.expires_at else None,
-            "is_expired": url_obj.is_expired,
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "slug": url_obj.slug,
+                "original_url": url_obj.original_url,
+                "total_clicks": url_obj.click_count,
+                "analytics": data,
+                "expires_at": url_obj.expires_at.isoformat() + "Z"
+                if url_obj.expires_at
+                else None,
+                "is_expired": url_obj.is_expired,
+            }
+        ), 200
 
-    except Exception as e:
+    except Exception:
         logger.exception("Error fetching analytics")
-        return jsonify({"success": False, "error": "An internal error occurred while fetching analytics"}), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": "An internal error occurred while fetching analytics",
+            }
+        ), 500
 
 
 @bp.route("/edit-url/<int:url_id>", methods=["PUT"])
@@ -381,9 +416,7 @@ def edit_url(url_id):
         # Check ownership - sub-admins can only edit their own links
         if url_obj.user_id != current_user.id:
             return (
-                jsonify(
-                    {"success": False, "error": "Unauthorized to edit this link"}
-                ),
+                jsonify({"success": False, "error": "Unauthorized to edit this link"}),
                 403,
             )
 
@@ -403,11 +436,16 @@ def edit_url(url_id):
             200,
         )
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error editing URL")
         return (
-            jsonify({"success": False, "error": "An internal error occurred while editing the URL"}),
+            jsonify(
+                {
+                    "success": False,
+                    "error": "An internal error occurred while editing the URL",
+                }
+            ),
             500,
         )
 
@@ -417,7 +455,7 @@ def edit_url(url_id):
 
 def _get_bio_user():
     """Get authenticated user from JWT or session. Returns user or None."""
-    if hasattr(request, 'current_user') and request.current_user:
+    if hasattr(request, "current_user") and request.current_user:
         return request.current_user
     if current_user.is_authenticated:
         return current_user
@@ -440,32 +478,34 @@ def get_bio():
     if not page:
         return jsonify({"success": True, "bio_page": None}), 200
 
-    links = BioLink.query.filter_by(
-        bio_page_id=page.id
-    ).order_by(BioLink.position).all()
+    links = (
+        BioLink.query.filter_by(bio_page_id=page.id).order_by(BioLink.position).all()
+    )
 
-    return jsonify({
-        "success": True,
-        "bio_page": {
-            "id": page.id,
-            "username": page.username,
-            "display_name": page.display_name,
-            "bio": page.bio,
-            "avatar_url": page.avatar_url,
-            "theme": page.theme,
-            "links": [
-                {
-                    "id": link.id,
-                    "title": link.title,
-                    "url": link.url,
-                    "position": link.position,
-                    "is_active": link.is_active,
-                    "click_count": link.click_count,
-                }
-                for link in links
-            ],
-        },
-    }), 200
+    return jsonify(
+        {
+            "success": True,
+            "bio_page": {
+                "id": page.id,
+                "username": page.username,
+                "display_name": page.display_name,
+                "bio": page.bio,
+                "avatar_url": page.avatar_url,
+                "theme": page.theme,
+                "links": [
+                    {
+                        "id": link.id,
+                        "title": link.title,
+                        "url": link.url,
+                        "position": link.position,
+                        "is_active": link.is_active,
+                        "click_count": link.click_count,
+                    }
+                    for link in links
+                ],
+            },
+        }
+    ), 200
 
 
 @bp.route("/bio", methods=["POST"])
@@ -478,7 +518,9 @@ def create_bio():
 
     existing = BioPage.query.filter_by(user_id=user.id).first()
     if existing:
-        return jsonify({"success": False, "error": "Bio page already exists. Use PUT to update."}), 400
+        return jsonify(
+            {"success": False, "error": "Bio page already exists. Use PUT to update."}
+        ), 400
 
     data = request.get_json()
     if not data:
@@ -486,10 +528,12 @@ def create_bio():
 
     username = data.get("username", "").strip().lower()
     if not username or not USERNAME_RE.match(username):
-        return jsonify({
-            "success": False,
-            "error": "Username must be 3-30 characters: lowercase letters, numbers, underscores, hyphens",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Username must be 3-30 characters: lowercase letters, numbers, underscores, hyphens",
+            }
+        ), 400
 
     if BioPage.query.filter_by(username=username).first():
         return jsonify({"success": False, "error": "Username already taken"}), 400
@@ -511,20 +555,22 @@ def create_bio():
         db.session.add(page)
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "bio_page": {
-                "id": page.id,
-                "username": page.username,
-                "display_name": page.display_name,
-                "bio": page.bio,
-                "avatar_url": page.avatar_url,
-                "theme": page.theme,
-                "links": [],
-            },
-        }), 201
+        return jsonify(
+            {
+                "success": True,
+                "bio_page": {
+                    "id": page.id,
+                    "username": page.username,
+                    "display_name": page.display_name,
+                    "bio": page.bio,
+                    "avatar_url": page.avatar_url,
+                    "theme": page.theme,
+                    "links": [],
+                },
+            }
+        ), 201
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error creating bio page")
         return jsonify({"success": False, "error": "Failed to create bio page"}), 500
@@ -550,13 +596,17 @@ def update_bio():
         if "username" in data:
             new_username = data["username"].strip().lower()
             if not USERNAME_RE.match(new_username):
-                return jsonify({
-                    "success": False,
-                    "error": "Username must be 3-30 characters: lowercase letters, numbers, underscores, hyphens",
-                }), 400
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": "Username must be 3-30 characters: lowercase letters, numbers, underscores, hyphens",
+                    }
+                ), 400
             existing = BioPage.query.filter_by(username=new_username).first()
             if existing and existing.id != page.id:
-                return jsonify({"success": False, "error": "Username already taken"}), 400
+                return jsonify(
+                    {"success": False, "error": "Username already taken"}
+                ), 400
             page.username = new_username
 
         if "display_name" in data:
@@ -570,19 +620,21 @@ def update_bio():
 
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "bio_page": {
-                "id": page.id,
-                "username": page.username,
-                "display_name": page.display_name,
-                "bio": page.bio,
-                "avatar_url": page.avatar_url,
-                "theme": page.theme,
-            },
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "bio_page": {
+                    "id": page.id,
+                    "username": page.username,
+                    "display_name": page.display_name,
+                    "bio": page.bio,
+                    "avatar_url": page.avatar_url,
+                    "theme": page.theme,
+                },
+            }
+        ), 200
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error updating bio page")
         return jsonify({"success": False, "error": "Failed to update bio page"}), 500
@@ -598,7 +650,9 @@ def upload_bio_avatar():
 
     page = BioPage.query.filter_by(user_id=user.id).first()
     if not page:
-        return jsonify({"success": False, "error": "Bio page not found. Create one first."}), 404
+        return jsonify(
+            {"success": False, "error": "Bio page not found. Create one first."}
+        ), 404
 
     if "avatar" not in request.files:
         return jsonify({"success": False, "error": "No file uploaded"}), 400
@@ -624,10 +678,12 @@ def upload_bio_avatar():
         # Return URL path for the avatar endpoint
         avatar_url = f"/api/avatar/{blob_name}"
 
-        return jsonify({
-            "success": True,
-            "avatar_url": avatar_url,
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "avatar_url": avatar_url,
+            }
+        ), 200
 
     except (ValueError, RuntimeError) as e:
         logger.warning("Avatar upload validation error: %s", e)
@@ -672,7 +728,9 @@ def create_bio_link():
         return jsonify({"success": False, "error": "Title and URL are required"}), 400
 
     if len(title) > 100:
-        return jsonify({"success": False, "error": "Title must be 100 characters or less"}), 400
+        return jsonify(
+            {"success": False, "error": "Title must be 100 characters or less"}
+        ), 400
 
     try:
         # Set position to end of list - use count for better performance
@@ -691,21 +749,23 @@ def create_bio_link():
         db.session.add(link)
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "link": {
-                "id": link.id,
-                "title": link.title,
-                "url": link.url,
-                "position": link.position,
-                "is_active": link.is_active,
-                "is_social": link.is_social,
-                "social_platform": link.social_platform,
-                "click_count": link.click_count,
-            },
-        }), 201
+        return jsonify(
+            {
+                "success": True,
+                "link": {
+                    "id": link.id,
+                    "title": link.title,
+                    "url": link.url,
+                    "position": link.position,
+                    "is_active": link.is_active,
+                    "is_social": link.is_social,
+                    "social_platform": link.social_platform,
+                    "click_count": link.click_count,
+                },
+            }
+        ), 201
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error creating bio link")
         return jsonify({"success": False, "error": "Failed to create link"}), 500
@@ -735,7 +795,9 @@ def update_bio_link(link_id):
         if "title" in data:
             title = data["title"].strip()
             if not title:
-                return jsonify({"success": False, "error": "Title cannot be empty"}), 400
+                return jsonify(
+                    {"success": False, "error": "Title cannot be empty"}
+                ), 400
             link.title = title[:100]
 
         if "url" in data:
@@ -749,19 +811,21 @@ def update_bio_link(link_id):
 
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "link": {
-                "id": link.id,
-                "title": link.title,
-                "url": link.url,
-                "position": link.position,
-                "is_active": link.is_active,
-                "click_count": link.click_count,
-            },
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "link": {
+                    "id": link.id,
+                    "title": link.title,
+                    "url": link.url,
+                    "position": link.position,
+                    "is_active": link.is_active,
+                    "click_count": link.click_count,
+                },
+            }
+        ), 200
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error updating bio link")
         return jsonify({"success": False, "error": "Failed to update link"}), 500
@@ -788,7 +852,7 @@ def delete_bio_link(link_id):
         db.session.commit()
         return jsonify({"success": True}), 200
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error deleting bio link")
         return jsonify({"success": False, "error": "Failed to delete link"}), 500
@@ -812,16 +876,14 @@ def reorder_bio_links():
 
     try:
         for item in data["order"]:
-            link = BioLink.query.filter_by(
-                id=item["id"], bio_page_id=page.id
-            ).first()
+            link = BioLink.query.filter_by(id=item["id"], bio_page_id=page.id).first()
             if link:
                 link.position = item["position"]
 
         db.session.commit()
         return jsonify({"success": True}), 200
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         logger.exception("Error reordering bio links")
         return jsonify({"success": False, "error": "Failed to reorder links"}), 500

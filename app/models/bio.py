@@ -1,6 +1,7 @@
-from datetime import datetime
-from app import db
 import re
+from datetime import datetime
+
+from app import db
 
 
 class BioPage(db.Model):
@@ -63,21 +64,21 @@ class BioLink(db.Model):
 
     # Social media platform patterns
     SOCIAL_PATTERNS = {
-        'twitter': r'(twitter\.com|x\.com)',
-        'linkedin': r'linkedin\.com',
-        'github': r'github\.com',
-        'instagram': r'instagram\.com',
-        'facebook': r'facebook\.com',
-        'youtube': r'youtube\.com',
-        'tiktok': r'tiktok\.com',
-        'discord': r'discord\.(gg|com)',
-        'telegram': r't\.me',
-        'whatsapp': r'(wa\.me|whatsapp\.com)',
-        'snapchat': r'snapchat\.com',
-        'reddit': r'reddit\.com',
-        'pinterest': r'pinterest\.com',
-        'twitch': r'twitch\.tv',
-        'medium': r'medium\.com',
+        "twitter": r"(twitter\.com|x\.com)",
+        "linkedin": r"linkedin\.com",
+        "github": r"github\.com",
+        "instagram": r"instagram\.com",
+        "facebook": r"facebook\.com",
+        "youtube": r"youtube\.com",
+        "tiktok": r"tiktok\.com",
+        "discord": r"discord\.(gg|com)",
+        "telegram": r"t\.me",
+        "whatsapp": r"(wa\.me|whatsapp\.com)",
+        "snapchat": r"snapchat\.com",
+        "reddit": r"reddit\.com",
+        "pinterest": r"pinterest\.com",
+        "twitch": r"twitch\.tv",
+        "medium": r"medium\.com",
     }
 
     @property
@@ -90,7 +91,7 @@ class BioLink(db.Model):
         for platform, pattern in self.SOCIAL_PATTERNS.items():
             if re.search(pattern, url_lower):
                 return platform
-        return 'other'
+        return "other"
 
     def __repr__(self):
         return f"<BioLink {self.title} -> {self.url[:50]}>"

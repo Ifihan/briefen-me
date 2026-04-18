@@ -1,11 +1,11 @@
 import hashlib
-import threading
 import logging
+import threading
 from datetime import datetime, timedelta
 
 import requests
-from user_agents import parse as parse_user_agent
 from sqlalchemy import func
+from user_agents import parse as parse_user_agent
 
 from app import db
 from app.models.click import Click

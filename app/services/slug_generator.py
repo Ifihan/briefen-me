@@ -1,11 +1,13 @@
 import json
+
 from flask import current_app
+
 from app.models.url import URL
-from app.services.web_scraper import scrape_webpage
 from app.services.ai_service import (
-    generate_slugs_with_thinking,
     generate_slugs_with_ai_thinking,
+    generate_slugs_with_thinking,
 )
+from app.services.web_scraper import scrape_webpage
 
 
 def generate_slug_options(url):

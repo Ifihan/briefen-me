@@ -1,10 +1,11 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
 from flask_cors import CORS
-from werkzeug.middleware.proxy_fix import ProxyFix
-from config import Config
+from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+from config import Config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -22,17 +23,20 @@ def create_app(config_class=Config):
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = "web.login"
-    migrate = Migrate(app, db)
+    Migrate(app, db)
 
     # Enable CORS for Chrome Extension
-    CORS(app, resources={
-        r"/api/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": False
-        }
-    })
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": "*",
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"],
+                "supports_credentials": False,
+            }
+        },
+    )
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
@@ -40,7 +44,7 @@ def create_app(config_class=Config):
         db.session.remove()
 
     # Register blueprints
-    from app.routes import web, api, auth
+    from app.routes import api, auth, web
 
     app.register_blueprint(web.bp)
     app.register_blueprint(api.bp)

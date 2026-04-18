@@ -1,6 +1,8 @@
 from datetime import datetime
-from app import db
+
 from flask import current_app
+
+from app import db
 
 
 class URL(db.Model):

@@ -1,8 +1,10 @@
-from datetime import datetime, timedelta
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
-from app import db
 import secrets
+from datetime import datetime, timedelta
+
+from flask_login import UserMixin
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from app import db
 
 
 class User(UserMixin, db.Model):
@@ -42,9 +44,7 @@ class User(UserMixin, db.Model):
             return False
         if self.reset_token != token:
             return False
-        if datetime.utcnow() > self.reset_token_expiry:
-            return False
-        return True
+        return datetime.utcnow() <= self.reset_token_expiry
 
     def clear_reset_token(self):
         """Clear the reset token after successful password reset."""

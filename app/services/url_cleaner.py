@@ -1,4 +1,4 @@
-from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 FUNCTIONAL_PARAMS = {
     "id",

@@ -1,6 +1,7 @@
+import ipaddress
 import re
 from urllib.parse import urlparse
-import ipaddress
+
 from app.services.url_cleaner import remove_tracking_parameters
 
 

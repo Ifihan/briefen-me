@@ -23,5 +23,30 @@ dependencies = [
     "flask-migrate>=4.0.5",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest>=8.0"]
+[dependency-groups]
+dev = ["pytest>=8.0", "ruff>=0.9.0"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+extend-exclude = ["migrations/"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort (import sorting)
+    "UP",   # pyupgrade (modernize syntax for py311)
+    "B",    # flake8-bugbear (common bugs)
+    "SIM",  # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # function calls in argument defaults (Flask patterns)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

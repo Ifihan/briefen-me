@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from app import db
 
 
@@ -8,9 +9,7 @@ class Click(db.Model):
     __tablename__ = "clicks"
 
     id = db.Column(db.Integer, primary_key=True)
-    url_id = db.Column(
-        db.Integer, db.ForeignKey("urls.id"), nullable=False, index=True
-    )
+    url_id = db.Column(db.Integer, db.ForeignKey("urls.id"), nullable=False, index=True)
     clicked_at = db.Column(
         db.DateTime, default=datetime.utcnow, nullable=False, index=True
     )

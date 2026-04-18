@@ -91,7 +91,7 @@
                         </div>
                     </div>
                     <div class="url-actions">
-                        <button type="button" onclick="copyUrl('{{ request.host_url }}{{ url.slug }}')" aria-label="Copy URL {{ url.slug }}">Copy</button>
+                        <button type="button" id="copy-btn-{{ url.id }}" onclick="copyUrl('{{ request.host_url }}', '{{ url.id }}')" aria-label="Copy URL {{ url.slug }}">Copy</button>
                         <button type="button" class="qr-btn" onclick="downloadQRCode({{ url.id }}, '{{ url.slug }}')" aria-label="Download QR code for {{ url.slug }}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <rect x="3" y="3" width="7" height="7"/>
@@ -149,8 +149,9 @@
 </div>
 
 <script>
-function copyUrl(url) {
-    navigator.clipboard.writeText(url).then(() => {
+function copyUrl(hostUrl, urlId) {
+    const slug = document.getElementById(`slug-text-${urlId}`).textContent;
+    navigator.clipboard.writeText(hostUrl + slug).then(() => {
         alert('URL copied to clipboard!');
     });
 }

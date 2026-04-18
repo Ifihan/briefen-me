@@ -27,6 +27,7 @@
         <button type="button" id="generate-btn" aria-label="Generate smart short links from URL">✨ Generate Smart Links</button>
     </div>
 
+    {% if current_user.is_authenticated %}
     <div class="expiration-section">
         <label>Link Expiration <span class="optional-label">(optional)</span></label>
         <div class="expiration-presets">
@@ -42,6 +43,7 @@
         </div>
         <input type="hidden" id="expires-at" value="" />
     </div>
+    {% endif %}
 
     <div id="progress-section" class="hidden" role="status" aria-live="polite" aria-atomic="true">
         <div class="progress-messages">

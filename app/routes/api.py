@@ -128,19 +128,19 @@ def create_short_url():
         if URL.query.filter_by(slug=slug).first():
             return jsonify({"success": False, "error": "Slug already taken"}), 400
 
-        # Parse optional expiration
-        expires_at = None
-        if data.get("expires_at") is not None:
-            expires_at, exp_error = _parse_expires_at(data["expires_at"])
-            if exp_error:
-                return jsonify({"success": False, "error": exp_error}), 400
-
         # Support both JWT and session-based auth
         user_id = None
         if hasattr(request, "current_user") and request.current_user:
             user_id = request.current_user.id
         elif current_user.is_authenticated:
             user_id = current_user.id
+
+        # Parse optional expiration (authenticated users only)
+        expires_at = None
+        if user_id and data.get("expires_at") is not None:
+            expires_at, exp_error = _parse_expires_at(data["expires_at"])
+            if exp_error:
+                return jsonify({"success": False, "error": exp_error}), 400
 
         new_url = URL(
             original_url=normalized_url,
